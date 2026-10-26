@@ -1,6 +1,6 @@
 # e-invoice-generator – Planung
 
-Stand: 25.10.2026 · Status: Planung abgeschlossen, Implementierung noch nicht begonnen
+Stand: 26.10.2026 · Status: Planung abgeschlossen, Implementierung noch nicht begonnen
 
 Ein Kommandozeilen-Tool für Solo-Selbständige: erzeugt monatliche Rechnungen als hybride
 ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
@@ -36,11 +36,16 @@ ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
 | PDF-Layout | **Thymeleaf** (HTML-Template) + **openhtmltopdf** (Fork `io.github.openhtmltopdf`) → PDF/A |
 | SVG-Logo | `openhtmltopdf-svg-support` (Batik) |
 | PDF-Manipulation | **Apache PDFBox** (Seiten des Stundennachweises anhängen) |
-| PDF/A-Prüfung | **veraPDF** als Java-Bibliothek |
+| PDF/A-Prüfung | **veraPDF** als Java-Bibliothek (kommt über `org.mustangproject:validator` mit) |
 | Konfiguration | **Jackson** + `jackson-dataformat-yaml`, Java-Records (gegenüber SnakeYAML direkt bevorzugt: Records ohne eigenen Abbildungscode, `FAIL_ON_UNKNOWN_PROPERTIES` erkennt Tippfehler, Fehlermeldungen mit Pfad) |
 | Konsole | **JLine 3** (Zeilenbearbeitung, Tab-Vervollständigung für Kunden und Dateipfade) |
 | Tests | JUnit 5, AssertJ |
 | Später: Mail | Jakarta Mail (Eclipse Angus Mail) |
+
+**PDFBox-Version:** Mustang 2.26.0 und openhtmltopdf 1.1.100 nutzen beide PDFBox **3.0.8**
+(Stand 26.10.2026). Damit das so bleibt, PDFBox in der `pom.xml` per `dependencyManagement`
+auf eine Version festlegen und den `maven-enforcer-plugin` mit der Regel `dependencyConvergence`
+einsetzen. Er meldet beim Build, wenn Abhängigkeiten auseinanderlaufen.
 
 picocli wird vorerst **nicht** gebraucht (nur interaktiver Ablauf). Es wird interessant, wenn
 später Unterbefehle wie `send` dazukommen.
@@ -215,7 +220,7 @@ Grundsatz: `domain` kennt weder PDF noch ZUGFeRD noch die Konsole, damit es gut 
 ## 9. Umsetzungsreihenfolge
 
 1. **PoC (Proof of Concept):** hartcodierte Rechnung mit Mustang + openhtmltopdf erzeugen und validieren;
-   **PDFBox-Versionskonflikt prüfen** (siehe offene Punkte).
+   mit `mvn dependency:tree` prüfen, dass nur eine PDFBox-Version im Classpath landet.
 2. Domänenmodell + Laden der YAML-Dateien (+ Tests für die Berechnung).
 3. HTML-Beispieltemplate → PDF/A (mit Logo-Unterstützung).
 4. Stundennachweis: veraPDF-Prüfung, Seiten anhängen, BG-24-Einbettung im XML.
@@ -223,10 +228,12 @@ Grundsatz: `domain` kennt weder PDF noch ZUGFeRD noch die Konsole, damit es gut 
 
 ## 10. Offene Punkte / Risiken
 
-- [ ] **PDFBox-Versionskonflikt:** Mustang und openhtmltopdf bringen evtl. unterschiedliche
-      PDFBox-Hauptversionen (2.x und 3.x) mit. Als Erstes im PoC prüfen. Auswege: anderer
-      PDF/A-Erzeuger, oder PDF/A-3 selbst mit PDFBox statt über Mustang.
-- [ ] **veraPDF-Artefakte:** welche Maven-Artefakte genau (evtl. schon transitiv über Mustangs Validator).
+- [x] **PDFBox-Versionskonflikt:** geklärt am 26.10.2026 anhand der POMs auf Maven Central, kein Konflikt.
+      `org.mustangproject:library` 2.26.0 und `io.github.openhtmltopdf:openhtmltopdf-pdfbox` 1.1.100
+      nutzen beide PDFBox 3.0.8. Nur das alte `com.openhtmltopdf` (zuletzt 1.0.10, 2021) nutzt
+      noch PDFBox 2, daher den Fork verwenden. Absicherung siehe Abschnitt 2.
+- [x] **veraPDF-Artefakte:** kommen transitiv über `org.mustangproject:validator` (2.26.0) mit
+      (`org.verapdf:validation-model-jakarta`), nicht über `library`. Kein eigenes veraPDF-Artefakt nötig.
 - [ ] **Aktuelle Versionen** aller Abhängigkeiten beim Projektstart festlegen.
 - [ ] **Ablageort der Konfiguration** festlegen (Vorschlag: `~/rechnungen/config/`).
 - [ ] **Package-Name** bestätigen (Vorschlag: `de.dingel.invoice`).
