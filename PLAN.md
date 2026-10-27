@@ -30,7 +30,7 @@ ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
 
 | Bereich | Wahl |
 |---|---|
-| Sprache | **Java 25** |
+| Sprache | **Java 21** (LTS; in der Cloud-Umgebung ist nur JDK 21 verfügbar) |
 | Build | **Maven**, ausführbares Fat-JAR via `maven-shade-plugin` |
 | ZUGFeRD | **Mustangproject** (`org.mustangproject:library`), Validierung mit Mustangs Validator |
 | PDF-Layout | **FreeMarker** (`org.freemarker:freemarker`, neueste Version, derzeit 2.3.35; XHTML-Template) + **openhtmltopdf** (Fork `io.github.openhtmltopdf`) → PDF/A |
@@ -70,11 +70,15 @@ seller:
   iban: DE...
   bic: ...
   email: ...
-  phone: ...
 outputDir: ~/rechnungen
 logo: ~/rechnungen/config/logo.svg       # optional
 template: ~/rechnungen/config/invoice.ftlh  # optional, sonst eingebautes Template
 ```
+
+`settings.yaml` enthält nur Verkäuferdaten, die auch ins **ZUGFeRD-XML** müssen (Name, Anschrift,
+USt-IdNr./Steuernummer, IBAN/BIC, E-Mail). Reine Anzeige-Angaben wie Tätigkeitsbezeichnung, Telefon,
+Mobil, Website und Name der Bank stehen **fest im Template**. Eigene Templates pro Kunde sind
+vorerst nicht vorgesehen, aber später möglich.
 
 ### `customers.yaml`
 
@@ -92,7 +96,17 @@ customers:
     hourlyRate: 95.00
     paymentTermDays: 30
     itemText: Beratung und Softwareentwicklung
+    fields:                           # optional: freie Platzhalter für das Template
+      vertragsdatum: "15.01.2026"
+      ansprechpartner: "z. Hd. Erika Musterfrau"
 ```
+
+**Freie Platzhalter (`fields`):** beliebige Schlüssel-Wert-Paare (Texte), die das Template als
+`customer.fields.<schlüssel>` verwendet. Fehlt ein Wert, reagiert das Template darauf, z. B.
+`<#if customer.fields.vertragsdatum??>gemäß unserem Vertrag vom ${customer.fields.vertragsdatum} …<#else>hiermit …</#if>`
+oder kurz `${customer.fields.ansprechpartner!}` (gibt bei fehlendem Wert nichts aus). Die Werte
+werden unverändert übernommen, also z. B. Datumsangaben schon im gewünschten Format eintragen.
+Sie landen nur im PDF, nicht im XML.
 
 ### `invoice-counter`
 
@@ -111,7 +125,7 @@ Auswahl [1]: 1
 Leistungszeitraum [10/2026]: ⏎
 Stunden: 37,5
 Stundennachweis (PDF): ~/Downloads/nachweis_okt<TAB>
-✔ PDF/A-2b konform, 2 Seiten
+✔ 2 Seiten, lässt sich PDF/A-konform anhängen
 
 ──────────────────────────────────────────
 Rechnung Nr. 302 an ACME GmbH
@@ -128,7 +142,7 @@ Rechnung erzeugen? [J/n]: J
 
 - Stunden: Komma und Punkt als Dezimaltrenner akzeptieren.
 - Vor dem Schreiben immer eine Zusammenfassung mit Bestätigung.
-- Der Stundennachweis wird **sofort nach Eingabe** auf PDF/A-Konformität geprüft (siehe 6).
+- Der Stundennachweis wird **sofort nach Eingabe** probeweise angehängt und geprüft (siehe 6).
 
 ## 5. Rechnungs-PDF und Layout
 
@@ -163,6 +177,14 @@ Rechnung erzeugen? [J/n]: J
 - **Schrift: Carlito** (Regular, Bold, Italic, BoldItalic als TTF in `src/main/resources/fonts/`, mit
   Lizenz `OFL-Carlito.txt`). Carlito ist maßgleich zu Calibri aus der Word-Vorlage, steht aber unter
   der SIL Open Font License und darf daher eingebettet und weitergegeben werden (Calibri nicht).
+- **Schutz gegen leere Rechnungen:** Fehlt openhtmltopdf eine Schrift, lässt es den Text im PDF/A-Modus
+  **stillschweigend weg** (nur Warnung „Font list is empty“). veraPDF meldet die leere Seite trotzdem
+  als konform (am 27.10.2026 getestet). Deshalb:
+  - Beim Start prüfen, dass alle Schriftdateien vorhanden und lesbar sind; sonst mit Fehlermeldung abbrechen.
+  - Nach dem Rendern den Text aus dem PDF zurücklesen (PDFBox `PDFTextStripper`) und prüfen, dass
+    mindestens Rechnungsnummer und Rechnungsbetrag darin vorkommen; sonst abbrechen.
+  - Ohne PDF/A-Modus würde openhtmltopdf auf eine nicht eingebettete Standardschrift (Times-Roman)
+    ausweichen, die Zeichen wie „Ł“ oder „≥“ nicht kennt (`#`). Systemschriften nutzt es nicht von selbst.
 - **Technik-Hinweis openhtmltopdf:** Inhalte außerhalb des Seiteninhalts werden abgeschnitten. Die
   Seitenränder links/rechts sind deshalb als Innenabstand von `body` umgesetzt, damit der Briefkopf im
   oberen Bereich frei positioniert werden kann.
@@ -180,18 +202,25 @@ widersprechen. Zusätzliche Informationen im PDF (Nachweis, AGB …) sind zuläs
 als ergänzende Unterlagen. Die Stundensumme im Nachweis muss zur Rechnung passen.
 (Eigene Lesart von ZUGFeRD-Spezifikation und BMF-Schreiben zur E-Rechnung, keine Steuerberatung.)
 
-**Annahme:** Die Nachweise sind PDF/A-konform (werden mit einem PDF/A-Druckertreiber erzeugt).
+**Der Nachweis muss selbst kein PDF/A sein.** (Geändert am 27.10.2026.) Ein Test mit einem
+Excel-Export (PDF 1.7, Schriften eingebettet, aber ohne PDF/A-Kennzeichnung und ohne Farbprofil) zeigte:
+Allein geprüft ist er kein PDF/A, an die Rechnung angehängt ergibt er aber gültiges **PDF/A-3b**,
+weil Farbprofil (Output Intent) und Kennzeichnung der Rechnung für das ganze Dokument gelten.
+PDF/A verlangt ZUGFeRD nur für die fertige Rechnung. Die frühere Annahme „Nachweise kommen aus
+einem PDF/A-Druckertreiber“ entfällt; Excel- und vermutlich auch Jira/Tempo-Exporte funktionieren so.
 
 **Prüfung (zweistufig):**
-1. **Nachweis direkt nach Eingabe** mit veraPDF prüfen (direkt, nicht über den ZUGFeRD-Validator,
-   der sonst das fehlende XML bemängeln würde). Bei Fehlern die wichtigsten Verstöße anzeigen,
-   dann Pfad neu abfragen oder abbrechen. Keine Rechnung erzeugen.
+1. **Nachweis direkt nach Eingabe** probeweise an eine leere PDF/A-3b-Seite (bzw. das gerenderte
+   Rechnungs-PDF) anhängen und das Ergebnis mit veraPDF prüfen. Bei Fehlern die wichtigsten
+   Verstöße anzeigen, dann Pfad neu abfragen oder abbrechen. Keine Rechnung erzeugen.
+   Typische Ursachen: nicht eingebettete Schriften, CMYK-Farben, Verschlüsselung.
 2. **Fertige Rechnung** prüfen (PDF/A-3 + ZUGFeRD-XML), weil auch zwei gültige Dateien zusammengefügt ungültig werden können.
 
 **Zu beachten beim Zusammenfügen:**
 - PDF/A-1b/2b-Seiten dürfen in einem PDF/A-3-Dokument stecken.
 - Nur **ein Output Intent** (sRGB aus der Rechnung). Ein CMYK-Nachweis würde kollidieren,
-  dann wenn möglich den Druckertreiber auf RGB umstellen oder im Code lösen.
+  dann wenn möglich den Export auf RGB umstellen oder im Code lösen.
+- Jira/Tempo-Exporte konnten nicht getestet werden (vertrauliche Daten); das testet der Nutzer selbst.
 - XMP-Metadaten des Nachweises verwerfen; die Metadaten der Rechnung gelten für das ganze Dokument.
 
 **Plan B (vorerst nicht gebaut):** Nachweisseiten mit PDFBox als Bild rendern (300 dpi) und als
@@ -272,7 +301,7 @@ Der PoC hat bestätigt, dass das Ergebnis die veraPDF-Prüfung (PDF/A-3b) besteh
    Als Nächstes die **Methodensignaturen der Interfaces** (siehe 8) festlegen und im Plan ergänzen.
 2. Domänenmodell + Laden der YAML-Dateien (+ Tests für die Berechnung).
 3. FreeMarker-Beispieltemplate → PDF/A (mit Logo-Unterstützung und HTML-Vorschau).
-4. Stundennachweis: veraPDF-Prüfung, Seiten anhängen, BG-24-Einbettung im XML.
+4. Stundennachweis: probeweise anhängen und mit veraPDF prüfen, Seiten anhängen, BG-24-Einbettung im XML.
 5. Interaktiver Dialog (JLine), Zähler, Ablage, Abschlussvalidierung.
 
 ## 10. Offene Punkte / Risiken
@@ -294,8 +323,7 @@ Der PoC hat bestätigt, dass das Ergebnis die veraPDF-Prüfung (PDF/A-3b) besteh
       oder einer separaten, geschützten Datei; zweistufig (erst erzeugen und ansehen, dann eigener
       Sende-Befehl → dann ggf. picocli für Unterbefehle).
 - [ ] **Plan B Stundennachweis** (als Bild rendern) nur bei Bedarf.
-- [ ] **Java 25** in der Cloud-Umgebung: dort ist nur JDK 21 installiert, und die Download-Quellen für
-      JDK 25 sind gesperrt. Der PoC lässt sich mit `-Dmaven.compiler.release=21` bauen (kein Java-25-Code).
+- [x] **Java-Version:** Java 21 statt 25 (in der Cloud-Umgebung ist nur JDK 21 verfügbar).
 
 ## 11. Ergebnisse des PoC (27.10.2026)
 
@@ -306,6 +334,7 @@ Ausführen: `mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegen
 |---|---|
 | FreeMarker → XHTML → PDF/A-3b (openhtmltopdf) | ✔ veraPDF: konform (3b) |
 | Stundennachweis (Beispiel, PDF/A-2b) mit veraPDF prüfen | ✔ konform (2b) |
+| Excel-Nachweis (kein PDF/A) angehängt | ✔ Ergebnis konform (3b), siehe 6 |
 | Nachweisseiten mit PDFBox anhängen (`importPage`) | ✔ weiterhin konform (3b) |
 | ZUGFeRD EN16931 mit Mustang, Nachweis zusätzlich als BG-24 (`AdditionalReferencedDocument`, TypeCode 916) | ✔ |
 | Fertige E-Rechnung: veraPDF + Mustang-Validator (Schema, Schematron) | ✔ konform (3b), „valid“ |
@@ -329,5 +358,8 @@ Ausführen: `mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegen
 - **Enforcer:** `dependencyConvergence` für alle Abhängigkeiten scheitert an Mustangs eigenem Baum
   (slf4j, ph-commons, Saxon u. a. in leicht abweichenden Versionen). Die Regel ist daher auf
   `org.apache.pdfbox` beschränkt; mit einer absichtlich falschen PDFBox-Version schlägt sie an.
-- **Noch offen:** Ein „echter“ Nachweis aus dem PDF/A-Druckertreiber (evtl. CMYK, anderer Output Intent)
-  wurde nicht getestet, nur ein selbst erzeugter.
+- **Nachweis ohne PDF/A:** Ein echter Excel-Export lässt sich anhängen, das Ergebnis ist PDF/A-3b
+  (siehe 6). Jira/Tempo-Exporte testet der Nutzer selbst.
+- **Fehlende Schriften** führen still zu leeren Seiten (siehe 5, „Schutz gegen leere Rechnungen“).
+- Im PoC-Template stehen die Anzeige-Angaben des Verkäufers noch als Variablen; in Schritt 3 werden
+  sie fest ins Template geschrieben (siehe 3).
