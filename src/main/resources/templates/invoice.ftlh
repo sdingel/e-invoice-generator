@@ -9,9 +9,9 @@
 <style>
   @page {
     size: A4;
-    /* Seitenränder links/rechts als Innenabstand von body: openhtmltopdf schneidet alles
-       außerhalb des Seiteninhalts ab, der Briefkopf liegt aber im oberen Rand.
-       Ränder wie in der Word-Vorlage: links 2,5 cm, rechts 2 cm. */
+    /* Left/right page margins are implemented as body padding: openhtmltopdf clips everything
+       outside the page content area, but the letterhead sits in the top margin.
+       Margins as in the Word template: left 2.5 cm, right 2 cm. */
     margin: 1cm 0 3.8cm 0;
     @bottom-center { content: element(footer); vertical-align: top; }
   }
@@ -19,7 +19,7 @@
          padding: 0 2cm 0 2.5cm; }
   p { margin: 0 0 10pt 0; }
 
-  /* Briefkopf oben rechts: Logo + Absender */
+  /* Letterhead top right: logo + sender */
   .letterhead { position: absolute; top: 0.45cm; right: 2cm; }
   .letterhead td { vertical-align: top; padding: 0; }
   .letterhead .logo { width: 1.9cm; height: 1.9cm; padding-right: 0.25cm; }
@@ -28,7 +28,7 @@
                       color: #ffffff; font-size: 8pt; text-align: center; }
   .letterhead .sender { font-size: 10.5pt; line-height: 1.3; }
 
-  /* Anschriftfeld */
+  /* Address field */
   .address-block { position: absolute; top: 4.3cm; left: 2.5cm; width: 8.5cm; }
   .return-address { font-size: 7pt; text-decoration: underline; margin-bottom: 8pt; }
   .recipient { line-height: 1.4; }
@@ -38,7 +38,7 @@
   .invoice-date { text-align: right; margin-bottom: 14pt; }
   .title { font-weight: bold; }
 
-  /* Positionstabelle */
+  /* Line items table */
   table.items { width: 100%; border-collapse: collapse; margin: 14pt 0 12pt 0; }
   table.items th { font-weight: normal; font-style: italic; text-align: left;
                    border-top: 0.75pt solid #000000; border-bottom: 0.75pt solid #000000;
@@ -53,7 +53,7 @@
   .attachments { margin-top: 2.6cm; }
   .attachments .label { font-weight: bold; }
 
-  /* Fußzeile auf jeder Seite */
+  /* Footer on every page */
   .footer { position: running(footer); width: 16.5cm; margin-left: 2.5cm; font-size: 10pt; line-height: 1.35;
             border-top: 0.5pt solid #808080; padding-top: 6pt; }
   .footer table { width: 100%; border-collapse: collapse; }

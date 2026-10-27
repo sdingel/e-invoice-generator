@@ -22,7 +22,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- PDFBox auf eine Version festlegen, Mustang und openhtmltopdf bringen sie beide mit -->
+            <!-- Pin PDFBox to one version; Mustang and openhtmltopdf both depend on it -->
             <dependency>
                 <groupId>org.apache.pdfbox</groupId>
                 <artifactId>pdfbox</artifactId>
@@ -87,8 +87,8 @@
                         </goals>
                         <configuration>
                             <rules>
-                                <!-- Nur PDFBox: Mustang selbst bringt bei kleineren Bibliotheken
-                                     (slf4j, ph-commons, Saxon ...) abweichende Versionen mit -->
+                                <!-- PDFBox only: Mustang's own dependency tree has diverging versions
+                                     of smaller libraries (slf4j, ph-commons, Saxon ...) -->
                                 <dependencyConvergence>
                                     <includes>
                                         <include>org.apache.pdfbox</include>
