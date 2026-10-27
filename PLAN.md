@@ -203,7 +203,7 @@ Bildseiten einfügen. Das ist immer PDF/A-konform, aber nicht mehr durchsuchbar.
 e-invoice-generator/
 ├── pom.xml
 └── src/
-    ├── main/java/de/dingel/invoice/
+    ├── main/java/de/steffendingel/einvoicegenerator/
     │   ├── App.java                      # main, verdrahtet alles
     │   ├── config/                       # Records + YAML-Laden
     │   │   ├── Settings.java, Seller.java, Customer.java, Address.java
@@ -250,14 +250,19 @@ Die Methodensignaturen werden erst nach dem PoC festgelegt (siehe 9).
 **Keine Interfaces** für die Domänen-Records und den `InvoiceCalculator`: reine Logik mit genau einer
 Umsetzung, die sich direkt testen lässt.
 
-Ob „Nachweisseiten anhängen“ und „XML einbetten“ zusammen in `EInvoiceWriter` gehören oder zwei
-Schritte sind, klärt der PoC (Reihenfolge, PDF/A-Konformität nach dem Zusammenfügen).
+**Entscheidung:** „Nachweisseiten anhängen“ und „XML einbetten“ sind **ein** Schritt in `EInvoiceWriter`.
+- Die Reihenfolge ist fest: erst Seiten anhängen, dann XML einbetten und PDF/A-3-Metadaten schreiben.
+  Würde man danach noch Seiten anhängen, gingen XMP-Metadaten bzw. Konformität kaputt.
+- Wie der Nachweis eingebunden wird, ist formatabhängig: ZUGFeRD hängt ihn als Seiten an und bettet
+  ihn zusätzlich als BG-24 ins XML ein; eine reine XML-Rechnung (XRechnung) hätte gar keine Seiten.
+- Das Anhängen der Seiten ist eine interne Hilfsklasse im Package `zugferd`, kein eigenes Interface.
+Der PoC bestätigt, dass das Ergebnis die veraPDF-Prüfung besteht.
 
 ## 9. Umsetzungsreihenfolge
 
 1. **PoC (Proof of Concept):** hartcodierte Rechnung mit Mustang + openhtmltopdf erzeugen und validieren;
    mit `mvn dependency:tree` prüfen, dass nur eine PDFBox-Version im Classpath landet.
-   Wegwerf-Code im Package `de.dingel.invoice.poc`, ohne die endgültige Struktur vorwegzunehmen.
+   Wegwerf-Code im Package `de.steffendingel.einvoicegenerator.poc`, ohne die endgültige Struktur vorwegzunehmen.
    Danach die **Methodensignaturen der Interfaces** (siehe 8) festlegen und im Plan ergänzen.
 2. Domänenmodell + Laden der YAML-Dateien (+ Tests für die Berechnung).
 3. FreeMarker-Beispieltemplate → PDF/A (mit Logo-Unterstützung und HTML-Vorschau).
@@ -274,7 +279,7 @@ Schritte sind, klärt der PoC (Reihenfolge, PDF/A-Konformität nach dem Zusammen
       (`org.verapdf:validation-model-jakarta`), nicht über `library`. Kein eigenes veraPDF-Artefakt nötig.
 - [ ] **Aktuelle Versionen** aller Abhängigkeiten beim Projektstart festlegen.
 - [ ] **Ablageort der Konfiguration** festlegen (Vorschlag: `~/rechnungen/config/`).
-- [ ] **Package-Name** bestätigen (Vorschlag: `de.dingel.invoice`).
+- [x] **Package-Name:** `de.steffendingel.einvoicegenerator` (Schema `de.steffendingel.<projektname>`, eigene Domain `steffendingel.de`).
 - [ ] **Schrift** für das Template auswählen (Source Sans 3, Liberation Sans o. ä.).
 - [ ] **Eigenes Layout** aus Word in HTML/CSS nachbauen, Logo bereitstellen (bevorzugt SVG). *(später)*
 - [ ] **Mailversand** *(später)*: Jakarta Mail/Angus Mail via SMTP, an Kunden-`email`,
