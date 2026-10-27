@@ -1,6 +1,6 @@
 # e-invoice-generator – Planung
 
-Stand: 27.10.2026 · Status: Planung abgeschlossen, Implementierung noch nicht begonnen
+Stand: 27.10.2026 · Status: PoC abgeschlossen, Umsetzung noch nicht begonnen
 
 Ein Kommandozeilen-Tool für Solo-Selbständige: erzeugt monatliche Rechnungen als hybride
 ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
@@ -19,7 +19,7 @@ ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
 | Abrechnungsrhythmus | Monatsweise, Leistungszeitraum standardmäßig = Vormonat (im Dialog überschreibbar) |
 | Positionen | Genau **eine Position** pro Rechnung: Menge = Stunden, Einheit `HUR`, Preis = Stundensatz des Kunden |
 | Positionstext | Fester Text pro Kunde aus YAML (ohne Monat) |
-| Leistungszeitraum | Pflichtangabe (§14 UStG): eigene Zeile im PDF + `BillingPeriod` im XML, automatisch berechnet |
+| Leistungszeitraum | Pflichtangabe (§14 UStG): Spalte in der Positionstabelle + `BillingPeriod` im XML, automatisch berechnet |
 | Rechnungsnummer | Rein numerisch, fortlaufend über Jahresgrenzen (z. B. `302`) |
 | Zahlungsziel | In Tagen, pro Kunde in YAML; Fälligkeit = Rechnungsdatum + Zahlungsziel |
 | Zahlungsart | SEPA-Überweisung (UNTDID 4461 Code `58`) mit IBAN/BIC |
@@ -45,7 +45,8 @@ ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
 **PDFBox-Version:** Mustang 2.26.0 und openhtmltopdf 1.1.100 nutzen beide PDFBox **3.0.8**
 (Stand 26.10.2026). Damit das so bleibt, PDFBox in der `pom.xml` per `dependencyManagement`
 auf eine Version festlegen und den `maven-enforcer-plugin` mit der Regel `dependencyConvergence`
-einsetzen. Er meldet beim Build, wenn Abhängigkeiten auseinanderlaufen.
+einsetzen, beschränkt auf `org.apache.pdfbox` (siehe 11). Er meldet beim Build, wenn PDFBox-Versionen
+auseinanderlaufen. Beides ist seit dem PoC in der `pom.xml` umgesetzt.
 
 picocli wird vorerst **nicht** gebraucht (nur interaktiver Ablauf). Es wird interessant, wenn
 später Unterbefehle wie `send` dazukommen.
@@ -131,7 +132,8 @@ Rechnung erzeugen? [J/n]: J
 
 ## 5. Rechnungs-PDF und Layout
 
-- Vorerst ein **Beispiel-Layout in HTML**. Das eigene Word-Layout mit Logo wird später nachgebaut.
+- **Layout** nach der eigenen Word-Vorlage nachgebaut (seit dem PoC, `templates/invoice.ftlh`), mit
+  Beispieldaten statt echter Daten (das Repository ist öffentlich). Ohne Falzmarken.
 - **Template austauschbar:** eingebautes Template im JAR (`templates/invoice.ftlh`), optional
   überschreibbar per `template:` in `settings.yaml`, also ohne neuen Build.
 - **FreeMarker-Konfiguration** (am 27.10.2026 mit 2.3.35 getestet):
@@ -148,16 +150,22 @@ Rechnung erzeugen? [J/n]: J
   - Bevorzugt SVG, sonst PNG mit ca. 300 dpi; Transparenz ist in PDF/A-3 erlaubt.
   - Aus Word: `.docx` ist ein ZIP, Bilder liegen unter `word/media/` (oft nur verkleinert, Original besser).
   - Der Renderer bekommt das Konfigurationsverzeichnis als Basis-URI, damit relative Pfade funktionieren.
-- Inhalt des Beispiel-Layouts:
-  - A4 via CSS `@page`, feste Ränder, Fußzeile auf jeder Seite
-  - Kopf: Logo + Absender
-  - Anschriftfeld nach DIN 5008
-  - Rechnungsdaten: Nummer, Datum, Leistungszeitraum, Fälligkeit
-  - Positionstabelle: Text, Stunden, Satz, Betrag; darunter Netto, 19 % USt, Brutto
-  - Zahlungshinweis („Zahlbar bis … ohne Abzug auf folgendes Konto …“)
-  - Hinweis „Anlage: Stundennachweis“
-  - Fußzeile: Bankverbindung, Steuernummer/USt-IdNr., Kontakt
-  - Schriften als TTF eingebettet (Pflicht für PDF/A), z. B. Source Sans 3 oder Liberation Sans
+- Inhalt des Layouts:
+  - A4, Ränder wie in Word (links 2,5 cm, rechts 2 cm), Fußzeile auf jeder Seite
+  - Kopf oben rechts: Logo + Absender (Name, Tätigkeitsbezeichnung, Anschrift)
+  - Anschriftfeld mit Rücksendeangabe
+  - Rechnungsdatum, Rechnungsnummer, Anrede, Einleitungssatz (optional mit Vertragsdatum)
+  - Positionstabelle: Leistung, Leistungszeitraum, Einheit, Menge, Einzelpreis, Gesamtpreis;
+    darunter Summe (netto), Umsatzsteuer 19 %, Rechnungsbetrag
+  - Zahlungshinweis („Bitte überweisen Sie den Rechnungsbetrag bis zum … auf das unten angegebene Konto.“)
+  - Anlagen („Stundennachweis MM/JJJJ“)
+  - Fußzeile in drei Spalten: Anschrift + USt-IdNr. | Telefon, Mobil, E-Mail, Web | Bankverbindung
+- **Schrift: Carlito** (Regular, Bold, Italic, BoldItalic als TTF in `src/main/resources/fonts/`, mit
+  Lizenz `OFL-Carlito.txt`). Carlito ist maßgleich zu Calibri aus der Word-Vorlage, steht aber unter
+  der SIL Open Font License und darf daher eingebettet und weitergegeben werden (Calibri nicht).
+- **Technik-Hinweis openhtmltopdf:** Inhalte außerhalb des Seiteninhalts werden abgeschnitten. Die
+  Seitenränder links/rechts sind deshalb als Innenabstand von `body` umgesetzt, damit der Briefkopf im
+  oberen Bereich frei positioniert werden kann.
 
 ## 6. Stundennachweis
 
@@ -256,14 +264,12 @@ Umsetzung, die sich direkt testen lässt.
 - Wie der Nachweis eingebunden wird, ist formatabhängig: ZUGFeRD hängt ihn als Seiten an und bettet
   ihn zusätzlich als BG-24 ins XML ein; eine reine XML-Rechnung (XRechnung) hätte gar keine Seiten.
 - Das Anhängen der Seiten ist eine interne Hilfsklasse im Package `zugferd`, kein eigenes Interface.
-Der PoC bestätigt, dass das Ergebnis die veraPDF-Prüfung besteht.
+Der PoC hat bestätigt, dass das Ergebnis die veraPDF-Prüfung (PDF/A-3b) besteht.
 
 ## 9. Umsetzungsreihenfolge
 
-1. **PoC (Proof of Concept):** hartcodierte Rechnung mit Mustang + openhtmltopdf erzeugen und validieren;
-   mit `mvn dependency:tree` prüfen, dass nur eine PDFBox-Version im Classpath landet.
-   Wegwerf-Code im Package `de.steffendingel.einvoicegenerator.poc`, ohne die endgültige Struktur vorwegzunehmen.
-   Danach die **Methodensignaturen der Interfaces** (siehe 8) festlegen und im Plan ergänzen.
+1. ✔ **PoC (Proof of Concept)**, erledigt am 27.10.2026 (Ergebnisse siehe 11).
+   Als Nächstes die **Methodensignaturen der Interfaces** (siehe 8) festlegen und im Plan ergänzen.
 2. Domänenmodell + Laden der YAML-Dateien (+ Tests für die Berechnung).
 3. FreeMarker-Beispieltemplate → PDF/A (mit Logo-Unterstützung und HTML-Vorschau).
 4. Stundennachweis: veraPDF-Prüfung, Seiten anhängen, BG-24-Einbettung im XML.
@@ -280,10 +286,48 @@ Der PoC bestätigt, dass das Ergebnis die veraPDF-Prüfung besteht.
 - [ ] **Aktuelle Versionen** aller Abhängigkeiten beim Projektstart festlegen.
 - [ ] **Ablageort der Konfiguration** festlegen (Vorschlag: `~/rechnungen/config/`).
 - [x] **Package-Name:** `de.steffendingel.einvoicegenerator` (Schema `de.steffendingel.<projektname>`, eigene Domain `steffendingel.de`).
-- [ ] **Schrift** für das Template auswählen (Source Sans 3, Liberation Sans o. ä.).
-- [ ] **Eigenes Layout** aus Word in HTML/CSS nachbauen, Logo bereitstellen (bevorzugt SVG). *(später)*
+- [x] **Schrift:** Carlito (maßgleich zu Calibri, OFL), siehe 5.
+- [x] **Eigenes Layout** aus Word in HTML/CSS nachgebaut (im PoC).
+- [ ] **Logo** bereitstellen (bevorzugt SVG); im Template derzeit ein Platzhalter.
 - [ ] **Mailversand** *(später)*: Jakarta Mail/Angus Mail via SMTP, an Kunden-`email`,
       BCC an das DMS; SMTP-Zugangsdaten **nicht** in der YAML, sondern in Umgebungsvariablen
       oder einer separaten, geschützten Datei; zweistufig (erst erzeugen und ansehen, dann eigener
       Sende-Befehl → dann ggf. picocli für Unterbefehle).
 - [ ] **Plan B Stundennachweis** (als Bild rendern) nur bei Bedarf.
+- [ ] **Java 25** in der Cloud-Umgebung: dort ist nur JDK 21 installiert, und die Download-Quellen für
+      JDK 25 sind gesperrt. Der PoC lässt sich mit `-Dmaven.compiler.release=21` bauen (kein Java-25-Code).
+
+## 11. Ergebnisse des PoC (27.10.2026)
+
+Ausführen: `mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.PocMain`
+(Ausgabe in `target/poc/`: HTML-Vorschau, Zwischen-PDFs, fertige E-Rechnung, Validierungsbericht).
+
+| Schritt | Ergebnis |
+|---|---|
+| FreeMarker → XHTML → PDF/A-3b (openhtmltopdf) | ✔ veraPDF: konform (3b) |
+| Stundennachweis (Beispiel, PDF/A-2b) mit veraPDF prüfen | ✔ konform (2b) |
+| Nachweisseiten mit PDFBox anhängen (`importPage`) | ✔ weiterhin konform (3b) |
+| ZUGFeRD EN16931 mit Mustang, Nachweis zusätzlich als BG-24 (`AdditionalReferencedDocument`, TypeCode 916) | ✔ |
+| Fertige E-Rechnung: veraPDF + Mustang-Validator (Schema, Schematron) | ✔ konform (3b), „valid“ |
+| `mvn dependency:tree` | ✔ nur PDFBox 3.0.8 |
+
+**Erkenntnisse, die in die Umsetzung gehören:**
+- **Konformitätsstufe:** Mustang schreibt standardmäßig PDF/A-3**u** in die Metadaten. Das schlug in
+  veraPDF fehl (Regel 6.2.11.7.2, fehlende Unicode-Zuordnung einzelner Zeichen), obwohl Mustangs eigener
+  Validator „valid“ meldete. Lösung: `setConformanceLevel(PDFAConformanceLevel.BASIC)` → 3b. Das ist
+  auch robuster für Nachweise aus PDF/A-Druckertreibern.
+- **Datumsfalle:** Mustang nimmt `java.util.Date` und formatiert in der Zeitzone der JVM. Mitternacht in
+  einer anderen Zone (z. B. `Europe/Berlin` auf einer UTC-Maschine) verschiebt alle Daten im XML um
+  einen Tag, ohne dass ein Validator es merkt. Umrechnung daher mit `ZoneId.systemDefault()`; ein Test
+  soll die Datumsangaben im XML gegen die erwarteten Werte prüfen.
+- **Farbprofil:** Das sRGB-Profil für PDF/A kommt aus dem JDK
+  (`ICC_Profile.getInstance(ColorSpace.CS_sRGB)`), keine eigene ICC-Datei nötig.
+- **Summen:** Mustang rechnet die Summen selbst; sie stimmen mit unserer Berechnung
+  (`BigDecimal`, kaufmännisch gerundet) überein: 37,5 h × 95,00 € = 3.562,50 €, USt 676,88 €, brutto 4.239,38 €.
+- **Hinweise des Validators:** nur „notice“-Meldungen aus den XRechnung-Regeln (Käuferreferenz,
+  elektronische Adresse usw.). Für ZUGFeRD EN16931 sind das keine Fehler.
+- **Enforcer:** `dependencyConvergence` für alle Abhängigkeiten scheitert an Mustangs eigenem Baum
+  (slf4j, ph-commons, Saxon u. a. in leicht abweichenden Versionen). Die Regel ist daher auf
+  `org.apache.pdfbox` beschränkt; mit einer absichtlich falschen PDFBox-Version schlägt sie an.
+- **Noch offen:** Ein „echter“ Nachweis aus dem PDF/A-Druckertreiber (evtl. CMYK, anderer Output Intent)
+  wurde nicht getestet, nur ein selbst erzeugter.
