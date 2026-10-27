@@ -227,10 +227,38 @@ e-invoice-generator/
 
 Grundsatz: `domain` kennt weder PDF noch ZUGFeRD noch die Konsole, damit es gut testbar ist.
 
+### Abhängigkeiten zwischen den Packages
+
+- `domain` hängt von keinem anderen Package ab.
+- `config`, `numbering`, `pdf`, `zugferd` und `archive` hängen nur von `domain` ab, nicht voneinander.
+- `cli` und `App` kennen alle Packages und verbinden sie miteinander.
+
+### Interfaces (Entwurf)
+
+Interfaces gibt es nur dort, wo mehrere Umsetzungen denkbar sind oder Tests etwas austauschen sollen.
+Die Methodensignaturen werden erst nach dem PoC festgelegt (siehe 9).
+
+| Interface | Zweck | Umsetzung (heute) | Weitere/Test-Umsetzung |
+|---|---|---|---|
+| `InvoiceDocumentRenderer` | Rechnung → sichtbares PDF/A | FreeMarker + openhtmltopdf (`PdfRenderer`) | anderes Layout oder anderer Renderer |
+| `EInvoiceWriter` | PDF/A + Rechnung + Nachweis → fertige E-Rechnung | ZUGFeRD via Mustang (`HybridInvoiceWriter`) | später z. B. XRechnung |
+| `PdfAValidator` | PDF/A-Prüfung (Stundennachweis) | veraPDF (`TimesheetValidator`) | Stub ohne die langsame Prüfung |
+| `EInvoiceValidator` | Prüfung der fertigen E-Rechnung (PDF/A-3 + XML) | Mustang-Validator | Stub |
+| `InvoiceNumberSource` | nächste Rechnungsnummer holen und bestätigen | Datei `invoice-counter` (`InvoiceCounter`) | im Speicher |
+| `InvoiceArchive` | Ablage, Duplikatprüfung, kein Überschreiben | Dateisystem | im Speicher |
+
+**Keine Interfaces** für die Domänen-Records und den `InvoiceCalculator`: reine Logik mit genau einer
+Umsetzung, die sich direkt testen lässt.
+
+Ob „Nachweisseiten anhängen“ und „XML einbetten“ zusammen in `EInvoiceWriter` gehören oder zwei
+Schritte sind, klärt der PoC (Reihenfolge, PDF/A-Konformität nach dem Zusammenfügen).
+
 ## 9. Umsetzungsreihenfolge
 
 1. **PoC (Proof of Concept):** hartcodierte Rechnung mit Mustang + openhtmltopdf erzeugen und validieren;
    mit `mvn dependency:tree` prüfen, dass nur eine PDFBox-Version im Classpath landet.
+   Wegwerf-Code im Package `de.dingel.invoice.poc`, ohne die endgültige Struktur vorwegzunehmen.
+   Danach die **Methodensignaturen der Interfaces** (siehe 8) festlegen und im Plan ergänzen.
 2. Domänenmodell + Laden der YAML-Dateien (+ Tests für die Berechnung).
 3. FreeMarker-Beispieltemplate → PDF/A (mit Logo-Unterstützung und HTML-Vorschau).
 4. Stundennachweis: veraPDF-Prüfung, Seiten anhängen, BG-24-Einbettung im XML.
