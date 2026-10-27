@@ -206,7 +206,9 @@ als ergänzende Unterlagen. Die Stundensumme im Nachweis muss zur Rechnung passe
 Excel-Export (PDF 1.7, Schriften eingebettet, aber ohne PDF/A-Kennzeichnung und ohne Farbprofil) zeigte:
 Allein geprüft ist er kein PDF/A, an die Rechnung angehängt ergibt er aber gültiges **PDF/A-3b**,
 weil Farbprofil (Output Intent) und Kennzeichnung der Rechnung für das ganze Dokument gelten.
-PDF/A verlangt ZUGFeRD nur für die fertige Rechnung. Die frühere Annahme „Nachweise kommen aus
+PDF/A verlangt ZUGFeRD nur für die fertige Rechnung. Ein Nachweis als PDF/A (z. B. PDF/A-2b über
+den Druckertreiber PDFCreator, ebenfalls getestet) ist trotzdem empfehlenswert: Die im XML
+eingebettete Kopie (BG-24) ist dann selbst archivtauglich, und Export-Probleme fallen früher auf. Die frühere Annahme „Nachweise kommen aus
 einem PDF/A-Druckertreiber“ entfällt; Excel- und vermutlich auch Jira/Tempo-Exporte funktionieren so.
 
 **Prüfung (zweistufig):**
@@ -328,6 +330,7 @@ Der PoC hat bestätigt, dass das Ergebnis die veraPDF-Prüfung (PDF/A-3b) besteh
 ## 11. Ergebnisse des PoC (27.10.2026)
 
 Ausführen: `mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.PocMain`
+(optional `-Dexec.args="<ausgabeordner> <nachweis.pdf>"` für einen eigenen Stundennachweis)
 (Ausgabe in `target/poc/`: HTML-Vorschau, Zwischen-PDFs, fertige E-Rechnung, Validierungsbericht).
 
 | Schritt | Ergebnis |
@@ -335,6 +338,7 @@ Ausführen: `mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegen
 | FreeMarker → XHTML → PDF/A-3b (openhtmltopdf) | ✔ veraPDF: konform (3b) |
 | Stundennachweis (Beispiel, PDF/A-2b) mit veraPDF prüfen | ✔ konform (2b) |
 | Excel-Nachweis (kein PDF/A) angehängt | ✔ Ergebnis konform (3b), siehe 6 |
+| Nachweis via PDFCreator (PDF/A-2b, Calibri eingebettet) angehängt | ✔ Nachweis allein 2b, Ergebnis 3b, Validator „valid“ |
 | Nachweisseiten mit PDFBox anhängen (`importPage`) | ✔ weiterhin konform (3b) |
 | ZUGFeRD EN16931 mit Mustang, Nachweis zusätzlich als BG-24 (`AdditionalReferencedDocument`, TypeCode 916) | ✔ |
 | Fertige E-Rechnung: veraPDF + Mustang-Validator (Schema, Schematron) | ✔ konform (3b), „valid“ |

@@ -118,20 +118,27 @@ public class PocMain {
         step("Rechnung gerendert", "PDF/A-3b, " + pageCount(invoicePdf) + " Seite(n)");
         report("Rechnung (vor ZUGFeRD)", validatePdfA(invoicePdf));
 
-        // 2. Stundennachweis: hier selbst erzeugt (PDF/A-2b), in echt vom PDF/A-Druckertreiber
-        byte[] timesheetPdf = renderPdf(timesheetXhtml(period, hours), PdfAConformance.PDFA_2_B);
+        // 2. Stundennachweis: als zweites Argument eine eigene PDF-Datei, sonst ein erzeugtes Beispiel.
+        //    Er muss selbst kein PDF/A sein (siehe PLAN.md, Abschnitt 6); die Prüfung allein ist nur Info.
+        byte[] timesheetPdf = args.length > 1
+                ? Files.readAllBytes(Path.of(args[1]))
+                : renderPdf(timesheetXhtml(period, hours), PdfAConformance.PDFA_2_B);
         Files.write(out.resolve("3-timesheet.pdf"), timesheetPdf);
-        PdfACheck timesheetCheck = validatePdfA(timesheetPdf);
-        report("Stundennachweis", timesheetCheck);
-        if (!timesheetCheck.compliant()) {
-            throw new IllegalStateException("Stundennachweis ist nicht PDF/A-konform, Abbruch.");
+        try {
+            report("Stundennachweis allein", validatePdfA(timesheetPdf));
+        } catch (Exception e) {
+            step("PDF/A Stundennachweis allein", "kein PDF/A (keine PDF/A-Kennzeichnung)");
         }
 
-        // 3. Nachweisseiten anhängen (vor dem Einbetten des XML)
+        // 3. Nachweisseiten anhängen (vor dem Einbetten des XML); entscheidend ist dieses Ergebnis
         byte[] merged = appendPages(invoicePdf, timesheetPdf);
         Files.write(out.resolve("4-merged.pdf"), merged);
         step("Seiten angehängt", pageCount(merged) + " Seiten");
-        report("Zusammengefügt (vor ZUGFeRD)", validatePdfA(merged));
+        PdfACheck mergedCheck = validatePdfA(merged);
+        report("Zusammengefügt (vor ZUGFeRD)", mergedCheck);
+        if (!mergedCheck.compliant()) {
+            throw new IllegalStateException("Mit diesem Stundennachweis entsteht kein PDF/A, Abbruch.");
+        }
 
         // 4. ZUGFeRD-XML (EN16931) inkl. Nachweis als BG-24 einbetten
         Invoice zf = mustangInvoice(number, invoiceDate, period, dueDate, hours, rate, vatPercent);
