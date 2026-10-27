@@ -1,6 +1,6 @@
 # e-invoice-generator – Planung
 
-Stand: 26.10.2026 · Status: Planung abgeschlossen, Implementierung noch nicht begonnen
+Stand: 27.10.2026 · Status: Planung abgeschlossen, Implementierung noch nicht begonnen
 
 Ein Kommandozeilen-Tool für Solo-Selbständige: erzeugt monatliche Rechnungen als hybride
 ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
@@ -33,7 +33,7 @@ ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
 | Sprache | **Java 25** |
 | Build | **Maven**, ausführbares Fat-JAR via `maven-shade-plugin` |
 | ZUGFeRD | **Mustangproject** (`org.mustangproject:library`), Validierung mit Mustangs Validator |
-| PDF-Layout | **Thymeleaf** (HTML-Template) + **openhtmltopdf** (Fork `io.github.openhtmltopdf`) → PDF/A |
+| PDF-Layout | **FreeMarker** (`org.freemarker:freemarker`, neueste Version, derzeit 2.3.35; XHTML-Template) + **openhtmltopdf** (Fork `io.github.openhtmltopdf`) → PDF/A |
 | SVG-Logo | `openhtmltopdf-svg-support` (Batik) |
 | PDF-Manipulation | **Apache PDFBox** (Seiten des Stundennachweises anhängen) |
 | PDF/A-Prüfung | **veraPDF** als Java-Bibliothek (kommt über `org.mustangproject:validator` mit) |
@@ -72,7 +72,7 @@ seller:
   phone: ...
 outputDir: ~/rechnungen
 logo: ~/rechnungen/config/logo.svg       # optional
-template: ~/rechnungen/config/invoice.html  # optional, sonst eingebautes Template
+template: ~/rechnungen/config/invoice.ftlh  # optional, sonst eingebautes Template
 ```
 
 ### `customers.yaml`
@@ -132,9 +132,19 @@ Rechnung erzeugen? [J/n]: J
 ## 5. Rechnungs-PDF und Layout
 
 - Vorerst ein **Beispiel-Layout in HTML**. Das eigene Word-Layout mit Logo wird später nachgebaut.
-- **Template austauschbar:** eingebautes Template im JAR (`templates/invoice.html`), optional
+- **Template austauschbar:** eingebautes Template im JAR (`templates/invoice.ftlh`), optional
   überschreibbar per `template:` in `settings.yaml`, also ohne neuen Build.
-- **Logo:** optional per `logo:` in `settings.yaml`; das Template lässt den Bereich weg, wenn keins gesetzt ist (`th:if`).
+- **FreeMarker-Konfiguration** (am 27.10.2026 mit 2.3.35 getestet):
+  - `new Configuration(Configuration.VERSION_2_3_35)`: Erst ab `incompatible_improvements` 2.3.33
+    lassen sich Record-Felder als `${customer.name}` lesen; mit 2.3.32 schlägt das fehl.
+  - Templates mit Endung `.ftlh` und `setRecognizeStandardFileExtensions(true)`: Dann maskiert
+    FreeMarker `&`, `<`, `>` automatisch (z. B. „Müller &amp; Söhne“). Sonst entsteht ungültiges
+    XHTML und openhtmltopdf bricht ab.
+  - Beträge und Datumsangaben werden in Java formatiert (deutsches Format), nicht im Template.
+- **Vorschau:** Anders als bei Thymeleaf lässt sich ein FreeMarker-Template nicht ungefüllt im Browser
+  ansehen. Für die Layout-Arbeit gibt es deshalb eine Vorschau, die das Template mit Beispieldaten als
+  HTML ausgibt.
+- **Logo:** optional per `logo:` in `settings.yaml`; das Template lässt den Bereich weg, wenn keins gesetzt ist (`<#if logo??>`).
   - Bevorzugt SVG, sonst PNG mit ca. 300 dpi; Transparenz ist in PDF/A-3 erlaubt.
   - Aus Word: `.docx` ist ein ZIP, Bilder liegen unter `word/media/` (oft nur verkleinert, Original besser).
   - Der Renderer bekommt das Konfigurationsverzeichnis als Basis-URI, damit relative Pfade funktionieren.
@@ -202,7 +212,7 @@ e-invoice-generator/
     │   │   ├── Invoice.java              # Nummer, Datum, Zeitraum, Kunde, Stunden, Beträge
     │   │   └── InvoiceCalculator.java
     │   ├── numbering/InvoiceCounter.java
-    │   ├── pdf/PdfRenderer.java          # Thymeleaf → HTML → PDF/A
+    │   ├── pdf/PdfRenderer.java          # FreeMarker → XHTML → PDF/A
     │   ├── pdf/TimesheetValidator.java   # veraPDF-Prüfung des Nachweises
     │   ├── zugferd/
     │   │   ├── ZugferdMapper.java        # Domain → Mustang-Invoice (inkl. BG-24-Anhang)
@@ -210,7 +220,7 @@ e-invoice-generator/
     │   ├── archive/InvoiceArchive.java   # Dateinamen, Duplikatprüfung, kein Überschreiben
     │   └── cli/InteractiveDialog.java    # JLine
     ├── main/resources/
-    │   ├── templates/invoice.html
+    │   ├── templates/invoice.ftlh
     │   └── fonts/
     └── test/java/...
 ```
@@ -222,7 +232,7 @@ Grundsatz: `domain` kennt weder PDF noch ZUGFeRD noch die Konsole, damit es gut 
 1. **PoC (Proof of Concept):** hartcodierte Rechnung mit Mustang + openhtmltopdf erzeugen und validieren;
    mit `mvn dependency:tree` prüfen, dass nur eine PDFBox-Version im Classpath landet.
 2. Domänenmodell + Laden der YAML-Dateien (+ Tests für die Berechnung).
-3. HTML-Beispieltemplate → PDF/A (mit Logo-Unterstützung).
+3. FreeMarker-Beispieltemplate → PDF/A (mit Logo-Unterstützung und HTML-Vorschau).
 4. Stundennachweis: veraPDF-Prüfung, Seiten anhängen, BG-24-Einbettung im XML.
 5. Interaktiver Dialog (JLine), Zähler, Ablage, Abschlussvalidierung.
 
