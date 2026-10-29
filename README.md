@@ -8,8 +8,9 @@ Command-line tool for freelancers that creates monthly invoices as hybrid **ZUGF
 
 ## How an invoice is generated
 
-The diagram shows the data flow as implemented in the proof of concept
-(`de.steffendingel.einvoicegenerator.poc.PocMain`).
+Each numbered processing step has one interface with a defined input and output (signatures in
+[`PLAN.md`](PLAN.md), section 8). The diagram shows the data flow; the proof of concept
+(`de.steffendingel.einvoicegenerator.poc.PocMain`) implements steps ② to ⑨ except ④.
 
 Legend: blue parallelograms are inputs, grey parallelograms are intermediate results and output,
 rectangles are processing steps, hexagons are checks that abort on failure. Dashed shapes are planned
@@ -18,82 +19,91 @@ but not part of the proof of concept yet.
 ```mermaid
 flowchart TD
     %% Inputs
-    data[/"Invoice data<br/>customer, hours, period, number"/]
+    request[/"Invoice request<br/>customer, period, hours, date"/]
+    number[/"Next invoice number<br/>counter file"/]
     template[/"FreeMarker template<br/>invoice.ftlh"/]
     fonts[/"Fonts (Carlito TTF)<br/>sRGB color profile"/]
     timesheet[/"Timesheet PDF<br/>PDF/A or plain PDF"/]
 
-    %% Visible invoice
-    freemarker["<b>FreeMarker</b><br/>fill template"]
-    xhtml[/"XHTML<br/>(also usable as HTML preview)"/]
-    openhtmltopdf["<b>openhtmltopdf</b><br/>render to PDF/A-3b"]
-    invoicePdf[/"Invoice PDF<br/>PDF/A-3b, 1 page"/]
-    textCheck{{"Read text back:<br/>number and total present?"}}
-
-    data --> freemarker
-    template --> freemarker
-    freemarker --> xhtml --> openhtmltopdf
-    fonts --> openhtmltopdf
-    openhtmltopdf --> invoicePdf --> textCheck
-
-    %% Timesheet pages
-    append["<b>PDFBox</b><br/>append timesheet pages"]
+    %% Steps and results
+    s1["① Calculate invoice"]
+    invoice[/"Invoice"/]
+    s2["② Fill template"]
+    xhtml[/"XHTML<br/>(also the HTML preview)"/]
+    s3["③ Render to PDF/A"]
+    invoicePdf[/"Invoice PDF<br/>PDF/A-3b"/]
+    s4{{"④ Read text back"}}
+    s5["⑤ Append timesheet pages"]
     mergedPdf[/"Invoice + timesheet<br/>PDF/A-3b"/]
-    mergedCheck{{"<b>veraPDF</b><br/>still PDF/A-3b?"}}
-
-    textCheck --> append
-    timesheet --> append
-    append --> mergedPdf --> mergedCheck
-
-    %% E-invoice
-    mapper["Map invoice data<br/>to Mustang invoice"]
-    cii[/"CII XML (EN16931)<br/>timesheet embedded as BG-24"/]
-    mustang["<b>Mustang</b><br/>embed XML, write PDF/A-3b metadata"]
+    s6{{"⑥ Check PDF/A"}}
+    s7["⑦ Create XML"]
+    xml[/"CII XML (EN16931)<br/>timesheet as BG-24"/]
+    s8["⑧ Embed XML"]
     hybrid[/"Hybrid e-invoice<br/>PDF/A-3b + factur-x.xml"/]
+    s9{{"⑨ Validate e-invoice"}}
+    s10["⑩ Store invoice"]
+    file[/"302_customer_2026-10.pdf"/]
+    s11["⑪ Increment invoice number"]
 
-    data --> mapper
-    timesheet -. "attached as BG-24" .-> mapper
-    mapper --> cii --> mustang
-    mergedCheck --> mustang
-    mustang --> hybrid
+    request --> s1
+    number --> s1
+    s1 --> invoice
 
-    %% Final checks and output
-    finalCheck{{"<b>veraPDF</b> + <b>Mustang validator</b><br/>PDF/A-3b, XML schema, Schematron"}}
-    output[/"302_customer_2026-10.pdf"/]
-    counter["Increment invoice number"]
+    invoice --> s2
+    template --> s2
+    s2 --> xhtml --> s3
+    fonts --> s3
+    s3 --> invoicePdf --> s4
 
-    hybrid --> finalCheck --> output --> counter
+    s4 --> s5
+    timesheet --> s5
+    s5 --> mergedPdf --> s6
+
+    invoice --> s7
+    timesheet --> s7
+    s7 --> xml
+
+    s6 --> s8
+    xml --> s8
+    s8 --> hybrid --> s9 --> s10 --> file
+    s10 --> s11
 
     %% Styles
     classDef input fill:#e8f1fb,stroke:#4a7ab5,color:#000
     classDef artifact fill:#f4f4f4,stroke:#888,color:#000
     classDef check fill:#fff4e0,stroke:#c98a1b,color:#000
     classDef planned stroke-dasharray: 5 5
-    class data,template,fonts,timesheet input
-    class xhtml,invoicePdf,mergedPdf,cii,hybrid,output artifact
-    class textCheck,mergedCheck,finalCheck check
-    class textCheck,counter planned
+    class request,number,template,fonts,timesheet input
+    class invoice,xhtml,invoicePdf,mergedPdf,xml,hybrid,file artifact
+    class s4,s6,s9 check
+    class s1,s4,s10,s11 planned
 ```
 
-| Step | Interface | Library | Result |
+| Step | Interface | Library | Input → output |
 |---|---|---|---|
-| Fill the template with the invoice data | `InvoiceDocumentRenderer` | FreeMarker 2.3.35 | XHTML (amounts and dates already formatted in Java) |
-| Render XHTML to PDF | `InvoiceDocumentRenderer` | openhtmltopdf 1.1.100 (PDFBox 3) | Invoice page as PDF/A-3b, fonts embedded |
-| Append the timesheet pages | `EInvoiceWriter` | PDFBox 3.0.8 | One PDF; output intent and metadata of the invoice apply to all pages |
-| Check the merged PDF | `PdfAValidator` (used by `EInvoiceWriter`) | veraPDF (via Mustang validator) | Must still be PDF/A-3b, otherwise abort |
-| Create and embed the XML | `EInvoiceWriter` | Mustang 2.26.0 | CII XML (EN16931) with the timesheet as BG-24, PDF/A-3b metadata |
-| Validate the result | `EInvoiceValidator` | veraPDF + Mustang validator | PDF/A-3b, XML schema and Schematron rules |
+| ① Calculate invoice | – (class `InvoiceCalculator`) | – | invoice request, invoice number → invoice |
+| ② Fill template | `InvoiceHtmlRenderer` | [FreeMarker](https://github.com/apache/freemarker) | invoice, attachment labels → XHTML |
+| ③ Render to PDF/A | `HtmlToPdfConverter` | [openhtmltopdf](https://github.com/openhtmltopdf/openhtmltopdf) | XHTML → invoice PDF (PDF/A-3b, fonts embedded) |
+| ④ Read text back | `PdfTextVerifier` | [PDFBox](https://github.com/apache/pdfbox) | PDF, expected texts → valid / problems |
+| ⑤ Append timesheet pages | `PdfPageAppender` | [PDFBox](https://github.com/apache/pdfbox) | invoice PDF, timesheet PDFs → merged PDF |
+| ⑥ Check PDF/A | `PdfAValidator` | [veraPDF](https://github.com/veraPDF/veraPDF-library) | PDF → valid / problems |
+| ⑦ Create XML | `EInvoiceXmlGenerator` | [Mustang](https://github.com/ZUGFeRD/mustangproject) | invoice, timesheets → CII XML |
+| ⑧ Embed XML | `EInvoiceXmlEmbedder` | [Mustang](https://github.com/ZUGFeRD/mustangproject) | merged PDF, XML → hybrid e-invoice |
+| ⑨ Validate e-invoice | `EInvoiceValidator` | [Mustang](https://github.com/ZUGFeRD/mustangproject) validator (incl. veraPDF) | e-invoice → valid / problems |
+| ⑩ Store invoice | `InvoiceArchive` | – | invoice, e-invoice → file in the output directory |
+| ⑪ Increment invoice number | `InvoiceNumberSource` | – | used number → counter file |
 
-Storing the file and incrementing the invoice number are done by `InvoiceArchive` and
-`InvoiceNumberSource`; `InvoiceService` runs the steps. Signatures: [`PLAN.md`](PLAN.md), section 8.
+`InvoiceService` runs the steps in this order and aborts at the first failed check.
 
 Notes:
 
-- The timesheet does **not** have to be PDF/A itself; what counts is the merged PDF.
-- The timesheet appears twice: as visible pages and as an attachment in the XML (BG-24), so it also
-  reaches recipients that only process the XML.
-- The text read-back check exists because openhtmltopdf silently drops all text in PDF/A mode when
-  no font is available, and veraPDF still reports the empty page as compliant.
+- The timesheet does **not** have to be PDF/A itself; what counts is the merged PDF (⑥). Right after
+  the timesheet is entered, ⑤ and ⑥ run on trial to report problems early.
+- The timesheet appears twice: as visible pages (⑤) and as an attachment in the XML (⑦, BG-24), so it
+  also reaches recipients that only process the XML.
+- ④ exists because openhtmltopdf silently drops all text in PDF/A mode when no font is available, and
+  veraPDF still reports the empty page as compliant.
+- ⑤ must run before ⑧: appending pages after embedding the XML would break the PDF/A metadata.
 
 ## Build and run
 

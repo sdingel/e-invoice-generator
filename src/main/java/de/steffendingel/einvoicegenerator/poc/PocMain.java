@@ -17,6 +17,7 @@ import org.mustangproject.Product;
 import org.mustangproject.TradeParty;
 import org.mustangproject.ZUGFeRD.PDFAConformanceLevel;
 import org.mustangproject.ZUGFeRD.Profiles;
+import org.mustangproject.ZUGFeRD.ZUGFeRD2PullProvider;
 import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromA3;
 import org.mustangproject.validator.ZUGFeRDValidator;
 import org.verapdf.gf.foundry.VeraGreenfieldFoundryProvider;
@@ -144,6 +145,15 @@ public class PocMain {
         Invoice zf = mustangInvoice(number, invoiceDate, period, dueDate, hours, rate, vatPercent);
         zf.embedFileInXML(new FileAttachment("stundennachweis-" + period + ".pdf", "application/pdf",
                 "Data", timesheetPdf).setDescription(timesheetLabel));
+        // 4a. XML separat erzeugen (eigener Schritt, unabhängig vom PDF)
+        ZUGFeRD2PullProvider provider = new ZUGFeRD2PullProvider();
+        provider.setProfile(Profiles.getByName("EN16931"));
+        provider.generateXML(zf);
+        byte[] xml = provider.getXML();
+        Files.write(out.resolve("4a-factur-x.xml"), xml);
+        step("XML erzeugt", xml.length + " Bytes");
+
+        // 4b. Fertiges XML ins PDF einbetten
         Path result = out.resolve(number + "_beispiel_" + period + ".pdf");
         try (ZUGFeRDExporterFromA3 exporter = new ZUGFeRDExporterFromA3()) {
             exporter.setProducer("e-invoice-generator (PoC)")
@@ -152,7 +162,7 @@ public class PocMain {
                     // Mustang schreibt sonst "3u" in die Metadaten; wir erzeugen bewusst 3b
                     .setConformanceLevel(PDFAConformanceLevel.BASIC)
                     .load(merged);
-            exporter.setTransaction(zf);
+            exporter.setXML(xml);
             exporter.export(result.toString());
         }
         step("ZUGFeRD erzeugt", result.toString());

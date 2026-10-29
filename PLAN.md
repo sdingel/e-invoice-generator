@@ -248,22 +248,25 @@ e-invoice-generator/
     ├── main/java/de/steffendingel/einvoicegenerator/
     │   ├── App.java                          # main, verdrahtet alles
     │   ├── domain/                           # Modell, Berechnung, Ablauf und alle Interfaces
-    │   │   ├── Seller, Customer, Address, BillingPeriod, InvoiceRequest, Invoice, Timesheet  (Records)
-    │   │   ├── ValidationResult              (Record)
-    │   │   ├── InvoiceCalculator             # InvoiceRequest + Nummer → Invoice
-    │   │   ├── InvoiceService                # Ablauf, kennt nur Interfaces
-    │   │   └── InvoiceDocumentRenderer, EInvoiceWriter, PdfAValidator, EInvoiceValidator,
-    │   │       InvoiceNumberSource, InvoiceArchive  (Interfaces)
+    │   │   ├── Seller, Customer, Address, BillingPeriod, InvoiceRequest, Invoice,
+    │   │   │   Timesheet, ValidationResult   (Records)
+    │   │   ├── InvoiceCalculator             # ① Berechnung
+    │   │   ├── GermanFormat                  # Beträge/Datum im deutschen Format (für ② und ④)
+    │   │   ├── InvoiceService                # Ablauf ①–⑪, kennt nur Interfaces
+    │   │   └── Interfaces zu ②–⑪ (siehe unten)
     │   ├── config/ConfigLoader.java          # YAML → Seller, Customer (Jackson, direkt auf die Records)
-    │   ├── numbering/FileInvoiceNumberSource.java   # Datei invoice-counter
+    │   ├── html/FreemarkerHtmlRenderer.java  # ②
     │   ├── pdf/
-    │   │   ├── FreemarkerPdfRenderer.java    # FreeMarker → XHTML → PDF/A-3b, Text zurücklesen
-    │   │   └── VeraPdfValidator.java         # veraPDF
+    │   │   ├── OpenHtmlToPdfConverter.java   # ③
+    │   │   ├── PdfBoxTextVerifier.java       # ④
+    │   │   ├── PdfBoxPageAppender.java       # ⑤
+    │   │   └── VeraPdfValidator.java         # ⑥
     │   ├── zugferd/
-    │   │   ├── ZugferdWriter.java            # Seiten anhängen + XML einbetten
-    │   │   ├── ZugferdMapper.java            # Invoice → Mustang-Invoice (inkl. BG-24)
-    │   │   └── MustangValidator.java         # Mustang-Validator (PDF/A + XML)
-    │   ├── archive/FileInvoiceArchive.java   # Dateinamen, Duplikatprüfung, kein Überschreiben
+    │   │   ├── ZugferdXmlGenerator.java      # ⑦ Invoice → Mustang → CII-XML (inkl. BG-24)
+    │   │   ├── ZugferdXmlEmbedder.java       # ⑧
+    │   │   └── MustangValidator.java         # ⑨
+    │   ├── archive/FileInvoiceArchive.java   # ⑩ Dateinamen, Duplikatprüfung, kein Überschreiben
+    │   ├── numbering/FileInvoiceNumberSource.java   # ⑪ Datei invoice-counter
     │   └── cli/InteractiveDialog.java        # JLine
     ├── main/resources/
     │   ├── templates/invoice.ftlh
@@ -276,38 +279,48 @@ Grundsatz: `domain` kennt weder PDF noch ZUGFeRD noch die Konsole, damit es gut 
 ### Abhängigkeiten zwischen den Packages
 
 - `domain` hängt von keinem anderen Package ab.
-- `config`, `numbering`, `pdf`, `zugferd` und `archive` hängen nur von `domain` ab, nicht voneinander.
+- `config`, `html`, `pdf`, `zugferd`, `archive` und `numbering` hängen nur von `domain` ab, nicht voneinander.
 - `cli` und `App` kennen alle Packages und verbinden sie miteinander.
 
-### Interfaces
+### Ablauf, Schritte und Interfaces (überarbeitet am 29.10.2026)
 
-Interfaces gibt es nur dort, wo mehrere Umsetzungen denkbar sind oder Tests etwas austauschen sollen.
-Sie liegen in `domain` (die Umsetzungen in den anderen Packages), damit die Abhängigkeiten nur in
-Richtung `domain` zeigen. Signaturen siehe unten.
+Jeder Verarbeitungsschritt im Diagramm der README hat eine Nummer und genau ein Interface mit klar
+definierter Eingabe und Ausgabe. Die Schritte lassen sich einzeln umsetzen und testen. Die Interfaces
+liegen in `domain`, die Umsetzungen in den anderen Packages, damit alle Abhängigkeiten zu `domain` zeigen.
 
-| Interface | Zweck | Umsetzung (heute) | Weitere/Test-Umsetzung |
-|---|---|---|---|
-| `InvoiceDocumentRenderer` | Rechnung → sichtbares PDF/A | FreeMarker + openhtmltopdf (`FreemarkerPdfRenderer`) | anderes Layout oder anderer Renderer |
-| `EInvoiceWriter` | PDF/A + Rechnung + Nachweis → fertige E-Rechnung | ZUGFeRD via Mustang (`ZugferdWriter`) | später z. B. XRechnung |
-| `PdfAValidator` | PDF/A-Prüfung (z. B. Rechnung + angehängter Nachweis) | veraPDF (`VeraPdfValidator`) | Stub ohne die langsame Prüfung |
-| `EInvoiceValidator` | Prüfung der fertigen E-Rechnung (PDF/A-3 + XML) | Mustang-Validator (`MustangValidator`) | Stub |
-| `InvoiceNumberSource` | nächste Rechnungsnummer holen und bestätigen | Datei `invoice-counter` (`FileInvoiceNumberSource`) | im Speicher |
-| `InvoiceArchive` | Ablage, Duplikatprüfung, kein Überschreiben | Dateisystem (`FileInvoiceArchive`) | im Speicher |
+| Nr. | Schritt | Interface (Umsetzung) | Eingabe | Ausgabe |
+|---|---|---|---|---|
+| ① | Calculate invoice | – (Klasse `InvoiceCalculator`) | `InvoiceRequest`, Rechnungsnummer | `Invoice` |
+| ② | Fill template | `InvoiceHtmlRenderer` (FreeMarker) | `Invoice`, Bezeichnungen der Anlagen | XHTML (`String`) |
+| ③ | Render to PDF/A | `HtmlToPdfConverter` (openhtmltopdf) | XHTML | Rechnungs-PDF (PDF/A-3b) |
+| ④ | Read text back | `PdfTextVerifier` (PDFBox) | PDF, erwartete Texte | `ValidationResult` |
+| ⑤ | Append timesheet pages | `PdfPageAppender` (PDFBox) | Rechnungs-PDF, Nachweis-PDFs | zusammengefügtes PDF |
+| ⑥ | Check PDF/A | `PdfAValidator` (veraPDF) | PDF | `ValidationResult` |
+| ⑦ | Create XML | `EInvoiceXmlGenerator` (Mustang) | `Invoice`, Nachweise | CII-XML (EN16931, Nachweise als BG-24) |
+| ⑧ | Embed XML | `EInvoiceXmlEmbedder` (Mustang) | zusammengefügtes PDF, XML | hybride E-Rechnung (PDF/A-3b) |
+| ⑨ | Validate e-invoice | `EInvoiceValidator` (Mustang-Validator) | E-Rechnung | `ValidationResult` |
+| ⑩ | Store invoice | `InvoiceArchive` (Dateisystem) | `Invoice`, E-Rechnung | Ablageort |
+| ⑪ | Increment invoice number | `InvoiceNumberSource` (Datei) | verwendete Nummer | – |
 
-**Keine Interfaces** für die Domänen-Records und den `InvoiceCalculator`: reine Logik mit genau einer
-Umsetzung, die sich direkt testen lässt.
+Die Rechnungsnummer für ① liefert ebenfalls `InvoiceNumberSource` (`peekNext`); verbraucht wird sie
+erst in ⑪, damit bei einem Abbruch keine Nummer verloren geht.
 
-**Entscheidung:** „Nachweisseiten anhängen“ und „XML einbetten“ sind **ein** Schritt in `EInvoiceWriter`.
-- Die Reihenfolge ist fest: erst Seiten anhängen, dann XML einbetten und PDF/A-3-Metadaten schreiben.
-  Würde man danach noch Seiten anhängen, gingen XMP-Metadaten bzw. Konformität kaputt.
-- Wie der Nachweis eingebunden wird, ist formatabhängig: ZUGFeRD hängt ihn als Seiten an und bettet
-  ihn zusätzlich als BG-24 ins XML ein; eine reine XML-Rechnung (XRechnung) hätte gar keine Seiten.
-- Das Anhängen der Seiten ist eine interne Hilfsklasse im Package `zugferd`, kein eigenes Interface.
-Der PoC hat bestätigt, dass das Ergebnis die veraPDF-Prüfung (PDF/A-3b) besteht.
+**Prüfung des Nachweises direkt nach der Eingabe** (siehe 6): `InvoiceService` führt ⑤ und ⑥ probeweise
+aus (Nachweis an eine leere PDF/A-3b-Seite anhängen und prüfen). Dafür braucht es kein eigenes Interface.
 
-### Signaturen (festgelegt am 29.10.2026)
+**XML erzeugen ⑦ und einbetten ⑧ sind getrennt.** Am 29.10.2026 im PoC bestätigt: Mustang erzeugt das XML
+separat (`ZUGFeRD2PullProvider`) und bettet ein fertiges XML ein (`setXML`); das eingebettete XML ist
+Byte für Byte identisch, das Ergebnis weiterhin gültig. Damit ist ⑦ auch ohne PDF testbar.
 
-Domänenmodell (Records, Werte unformatiert; formatiert wird erst im Renderer):
+**Reihenfolge:** Seiten anhängen ⑤ muss vor dem Einbetten ⑧ passieren, sonst gehen XMP-Metadaten und
+Konformität kaputt. Das stellt `InvoiceService` sicher.
+
+**Andere Formate (z. B. XRechnung, später):** reine XML-Rechnungen brauchen nur ① und ⑦, ⑨–⑪
+(mit eigener Umsetzung von ⑦ und ⑨); ②–⑥ und ⑧ entfallen.
+
+### Signaturen
+
+Domänenmodell (Records, Werte unformatiert):
 
 ```java
 record Address(String street, String zip, String city, String country) {}
@@ -331,47 +344,60 @@ record Invoice(String number, LocalDate invoiceDate, LocalDate dueDate, BillingP
                Seller seller, Customer customer, BigDecimal hours, BigDecimal hourlyRate,
                BigDecimal netAmount, BigDecimal vatRate, BigDecimal vatAmount, BigDecimal grossAmount) {}
 
-/** Stundennachweis als PDF; label erscheint im PDF („Anlagen“) und im XML (BG-24). */
+/** Stundennachweis; label erscheint im PDF („Anlagen“) und im XML (BG-24). */
 record Timesheet(String fileName, String label, byte[] pdf) {}
 
 record ValidationResult(boolean valid, String summary, List<String> problems) {}
 ```
 
-Interfaces:
+Interfaces (Nummern wie im Diagramm):
 
 ```java
-interface InvoiceDocumentRenderer {
-    /**
-     * Renders the visible invoice as PDF/A-3b. Implementations verify their output
-     * (e.g. read the text back) and throw if the result is unusable.
-     */
-    byte[] render(Invoice invoice, List<Timesheet> attachments) throws IOException;
+// ②
+interface InvoiceHtmlRenderer {
+    String renderHtml(Invoice invoice, List<String> attachmentLabels) throws IOException;
 }
 
-interface EInvoiceWriter {
-    /** Checks early whether this timesheet can be included (ZUGFeRD: append on trial, then PDF/A check). */
-    ValidationResult checkTimesheet(Timesheet timesheet) throws IOException;
-
-    /** Combines the rendered invoice, the timesheets and the XML into the final e-invoice. */
-    byte[] write(Invoice invoice, byte[] renderedPdf, List<Timesheet> timesheets) throws IOException;
+// ③
+interface HtmlToPdfConverter {
+    /** Converts XHTML into a PDF/A-3b document with embedded fonts. */
+    byte[] convert(String xhtml) throws IOException;
 }
 
+// ④
+interface PdfTextVerifier {
+    /** Checks that all expected texts occur in the PDF (guards against silently missing fonts). */
+    ValidationResult verify(byte[] pdf, List<String> expectedTexts) throws IOException;
+}
+
+// ⑤
+interface PdfPageAppender {
+    /** Appends all pages of the attachments; metadata and output intent of the base document are kept. */
+    byte[] append(byte[] basePdf, List<byte[]> attachmentPdfs) throws IOException;
+}
+
+// ⑥
 interface PdfAValidator {
     ValidationResult validate(byte[] pdf) throws IOException;
 }
 
+// ⑦
+interface EInvoiceXmlGenerator {
+    byte[] generateXml(Invoice invoice, List<Timesheet> timesheets) throws IOException;
+}
+
+// ⑧
+interface EInvoiceXmlEmbedder {
+    /** Embeds the XML into the PDF/A document and writes the PDF/A-3b and e-invoice metadata. */
+    byte[] embed(byte[] pdf, byte[] xml) throws IOException;
+}
+
+// ⑨
 interface EInvoiceValidator {
     ValidationResult validate(byte[] eInvoice) throws IOException;
 }
 
-interface InvoiceNumberSource {
-    /** Next free number, without reserving it. */
-    String peekNext() throws IOException;
-
-    /** Marks the number as used; fails if it is not the expected next number. */
-    void markUsed(String number) throws IOException;
-}
-
+// ⑩
 interface InvoiceArchive {
     /** Existing invoice for the same customer and period (warning about double billing). */
     Optional<String> findExisting(String customerId, BillingPeriod period) throws IOException;
@@ -379,38 +405,39 @@ interface InvoiceArchive {
     /** Stores the invoice and returns where it was stored; never overwrites an existing file. */
     String store(Invoice invoice, byte[] eInvoice) throws IOException;
 }
+
+// ① (Nummer holen) und ⑪
+interface InvoiceNumberSource {
+    /** Next free number, without reserving it. */
+    String peekNext() throws IOException;
+
+    /** Marks the number as used; fails if it is not the expected next number. */
+    void markUsed(String number) throws IOException;
+}
 ```
 
 Ablauf in `InvoiceService` (kennt nur die Interfaces):
 
 ```java
-class InvoiceService {
-    ValidationResult checkTimesheet(Timesheet timesheet);          // direkt nach der Eingabe im Dialog
-    Optional<String> findExisting(Customer customer, BillingPeriod period);
-    Invoice prepare(InvoiceRequest request);                         // Nummer (peekNext) + Berechnung → Zusammenfassung
-    String generate(Invoice invoice, List<Timesheet> timesheets);    // nach Bestätigung:
-    //   renderer.render → writer.write → eInvoiceValidator.validate (sonst Abbruch)
-    //   → archive.store → numbers.markUsed(invoice.number())
-}
+ValidationResult checkTimesheet(Timesheet timesheet);        // ⑤ + ⑥ probeweise, direkt nach der Eingabe
+Optional<String> findExisting(Customer customer, BillingPeriod period);
+Invoice prepare(InvoiceRequest request);                       // peekNext + ① → Zusammenfassung im Dialog
+String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätigung: ② → ③ → ④ → ⑤ → ⑥
+                                                               // → ⑦ → ⑧ → ⑨ → ⑩ → ⑪; jede Prüfung bricht ab
 ```
 
 **Begründungen:**
 - **`byte[]` statt Dateien:** Rechnung und Nachweise sind klein (einige 100 KB); im Speicher sind die
-  Schritte einfacher zu verketten und zu testen. Nur `InvoiceArchive` und `ConfigLoader` arbeiten mit Dateien.
-- **Nummer:** `String`, weil sie so ins XML und in den Dateinamen geht; `InvoiceNumberSource` darf
-  intern rein numerisch zählen. Erst `peekNext`, dann nach erfolgreicher Ablage `markUsed`, damit
-  bei einem Abbruch keine Nummer verloren geht.
-- **`checkTimesheet` gehört zu `EInvoiceWriter`:** Ob und wie ein Nachweis eingebunden werden kann,
-  hängt vom Format ab (ZUGFeRD hängt Seiten an, XRechnung nicht). `ZugferdWriter` nutzt dafür den
-  `PdfAValidator`.
-- **Text zurücklesen im Renderer:** Das Risiko „leere Seite bei fehlender Schrift“ entsteht in
-  openhtmltopdf; die Prüfung braucht PDFBox und gehört deshalb nicht nach `domain`.
-- **`render` bekommt die Nachweise**, damit das Template sie unter „Anlagen“ auflisten kann.
-- **HTML-Vorschau** ist eine zusätzliche Methode von `FreemarkerPdfRenderer` (`renderHtml`), nicht Teil
-  des Interfaces, weil ein anderer Renderer kein HTML erzeugen muss.
+  Schritte einfacher zu verketten und zu testen. Nur `InvoiceArchive`, `InvoiceNumberSource` und
+  `ConfigLoader` arbeiten mit Dateien.
+- **Rechnungsnummer als `String`,** weil sie so ins XML und in den Dateinamen geht; intern zählt
+  `InvoiceNumberSource` rein numerisch.
+- **Erwartete Texte für ④** (Rechnungsnummer, Rechnungsbetrag) erzeugt `InvoiceService` mit
+  `GermanFormat`, also im selben Format wie im Template.
+- **HTML-Vorschau** ist einfach das Ergebnis von ②.
 - **Seller/Customer:** Jackson liest die YAML-Dateien direkt in diese Records (Namen passen, keine
-  Annotationen nötig); eigene Konfigurationsklassen braucht es nicht.
-- **Fehler:** Technische Fehler als `IOException`, fachliche Prüfergebnisse als `ValidationResult`.
+  Annotationen nötig).
+- **Fehler:** Technische Fehler als `IOException`, Prüfergebnisse als `ValidationResult`.
 
 ## 9. Umsetzungsreihenfolge
 
