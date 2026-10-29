@@ -43,10 +43,13 @@ ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
 | Später: Mail | Jakarta Mail (Eclipse Angus Mail) |
 
 **PDFBox-Version:** Mustang 2.26.0 und openhtmltopdf 1.1.100 nutzen beide PDFBox **3.0.8**
-(Stand 26.10.2026). Damit das so bleibt, PDFBox in der `pom.xml` per `dependencyManagement`
-auf eine Version festlegen und den `maven-enforcer-plugin` mit der Regel `dependencyConvergence`
-einsetzen, beschränkt auf `org.apache.pdfbox` (siehe 11). Er meldet beim Build, wenn PDFBox-Versionen
-auseinanderlaufen. Beides ist seit dem PoC in der `pom.xml` umgesetzt.
+(Stand 26.10.2026). PDFBox ist eine **direkte Abhängigkeit** (wir nutzen die API selbst) und legt
+damit die Version auch für Mustang und openhtmltopdf fest. Der `maven-enforcer-plugin` prüft beim Build:
+- `requireMavenVersion` (≥ 3.9) und `requireJavaVersion` (≥ 21)
+- `requireUpperBoundDeps`: keine Bibliothek in einer älteren Version als irgendwo verlangt.
+  Hat `commons-logging` 1.3.0 (über Mustang → FOP) statt der von PDFBox verlangten 1.4.0 gefunden;
+  das ist der einzige Eintrag im `dependencyManagement`.
+- `dependencyConvergence`, beschränkt auf `org.apache.pdfbox` (siehe 11).
 
 picocli wird vorerst **nicht** gebraucht (nur interaktiver Ablauf). Es wird interessant, wenn
 später Unterbefehle wie `send` dazukommen.
@@ -362,6 +365,7 @@ Ausführen: `mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegen
 - **Enforcer:** `dependencyConvergence` für alle Abhängigkeiten scheitert an Mustangs eigenem Baum
   (slf4j, ph-commons, Saxon u. a. in leicht abweichenden Versionen). Die Regel ist daher auf
   `org.apache.pdfbox` beschränkt; mit einer absichtlich falschen PDFBox-Version schlägt sie an.
+  Für alle Abhängigkeiten deckt `requireUpperBoundDeps` den gefährlicheren Fall ab (Version zu alt).
 - **Nachweis ohne PDF/A:** Ein echter Excel-Export lässt sich anhängen, das Ergebnis ist PDF/A-3b
   (siehe 6). Jira/Tempo-Exporte testet der Nutzer selbst.
 - **Fehlende Schriften** führen still zu leeren Seiten (siehe 5, „Schutz gegen leere Rechnungen“).
