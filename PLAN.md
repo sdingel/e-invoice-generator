@@ -200,6 +200,11 @@ Rechnung erzeugen? [J/n]: J
    Bezeichnung z. B. „Stundennachweis 10/2026“). So kommt er auch bei Empfängern an,
    die nur das XML verarbeiten.
 
+Am 29.10.2026 bestätigt, obwohl der Nachweis dadurch zweimal in der Datei steckt (im PoC: 26 KB
+Nachweis → XML 41 KB, Datei 100 KB statt 53 KB). Grund: Wie die Kunden die Rechnungen verarbeiten,
+ist unbekannt. Verworfene Alternativen: nur sichtbare Seiten; BG-24 nur als Verweis ohne Inhalt;
+Nachweis als eigene Datei im PDF/A-3-Container. Bei Bedarf später pro Kunde einstellbar machen.
+
 **Zulässigkeit:** Das XML ist führend. PDF und XML dürfen sich bei den Rechnungsangaben nicht
 widersprechen. Zusätzliche Informationen im PDF (Nachweis, AGB …) sind zulässig und gelten
 als ergänzende Unterlagen. Die Stundensumme im Nachweis muss zur Rechnung passen.
