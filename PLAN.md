@@ -315,7 +315,10 @@ aus (Nachweis an eine leere PDF/A-3b-Seite anhängen und prüfen). Dafür brauch
 
 **XML erzeugen ⑦ und einbetten ⑧ sind getrennt.** Am 29.10.2026 im PoC bestätigt: Mustang erzeugt das XML
 separat (`ZUGFeRD2PullProvider`) und bettet ein fertiges XML ein (`setXML`); das eingebettete XML ist
-Byte für Byte identisch, das Ergebnis weiterhin gültig. Damit ist ⑦ auch ohne PDF testbar.
+Byte für Byte identisch, das Ergebnis weiterhin gültig. Die Trennung ist bewusst gewählt (statt eines
+gemeinsamen Schritts wie im üblichen Mustang-Aufruf): ⑦ ist ohne PDF testbar (z. B. Datumsangaben im
+XML, siehe Datumsfalle in 11), und eine spätere XRechnung braucht nur ⑦. Das ZUGFeRD-Profil (EN16931)
+steht als eine gemeinsame Konstante für ⑦ und ⑧.
 
 **Reihenfolge:** Seiten anhängen ⑤ muss vor dem Einbetten ⑧ passieren, sonst gehen XMP-Metadaten und
 Konformität kaputt. Das stellt `InvoiceService` sicher.
