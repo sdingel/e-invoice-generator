@@ -75,14 +75,17 @@ flowchart TD
     class textCheck,counter planned
 ```
 
-| Step | Library | Result |
-|---|---|---|
-| Fill the template with the invoice data | FreeMarker 2.3.35 | XHTML (amounts and dates already formatted in Java) |
-| Render XHTML to PDF | openhtmltopdf 1.1.100 (PDFBox 3) | Invoice page as PDF/A-3b, fonts embedded |
-| Append the timesheet pages | PDFBox 3.0.8 | One PDF; output intent and metadata of the invoice apply to all pages |
-| Check the merged PDF | veraPDF (via Mustang validator) | Must still be PDF/A-3b, otherwise abort |
-| Create and embed the XML | Mustang 2.26.0 | CII XML (EN16931) with the timesheet as BG-24, PDF/A-3b metadata |
-| Validate the result | veraPDF + Mustang validator | PDF/A-3b, XML schema and Schematron rules |
+| Step | Interface | Library | Result |
+|---|---|---|---|
+| Fill the template with the invoice data | `InvoiceDocumentRenderer` | FreeMarker 2.3.35 | XHTML (amounts and dates already formatted in Java) |
+| Render XHTML to PDF | `InvoiceDocumentRenderer` | openhtmltopdf 1.1.100 (PDFBox 3) | Invoice page as PDF/A-3b, fonts embedded |
+| Append the timesheet pages | `EInvoiceWriter` | PDFBox 3.0.8 | One PDF; output intent and metadata of the invoice apply to all pages |
+| Check the merged PDF | `PdfAValidator` (used by `EInvoiceWriter`) | veraPDF (via Mustang validator) | Must still be PDF/A-3b, otherwise abort |
+| Create and embed the XML | `EInvoiceWriter` | Mustang 2.26.0 | CII XML (EN16931) with the timesheet as BG-24, PDF/A-3b metadata |
+| Validate the result | `EInvoiceValidator` | veraPDF + Mustang validator | PDF/A-3b, XML schema and Schematron rules |
+
+Storing the file and incrementing the invoice number are done by `InvoiceArchive` and
+`InvoiceNumberSource`; `InvoiceService` runs the steps. Signatures: [`PLAN.md`](PLAN.md), section 8.
 
 Notes:
 
