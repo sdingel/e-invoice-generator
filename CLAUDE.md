@@ -12,6 +12,8 @@ timesheet. The plan and all decisions are in `PLAN.md`.
   - Comments in the throwaway proof of concept (`de.steffendingel.einvoicegenerator.poc`) may stay German.
   - User-facing text is German where it belongs to the domain: invoice template content (German
     invoices), console dialog of the tool.
+  - Review comments on pull requests may be German. Reply in the language of the comment you are
+    answering.
 - Conversations with the owner are in German.
 
 ## Conventions
