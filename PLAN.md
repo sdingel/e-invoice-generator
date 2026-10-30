@@ -251,17 +251,17 @@ e-invoice-generator/
 ├── pom.xml
 └── src/
     ├── main/java/de/steffendingel/einvoicegenerator/
-    │   ├── App.java                          # main, verdrahtet alles
+    │   ├── App                               # main: Konfiguration laden, Umsetzungen erzeugen, Dialog starten
+    │   ├── InvoiceService                    # Ablauf ①–⑪, kennt nur die Interfaces
+    │   ├── InvoiceCalculator                 # ① Berechnung (reine Logik, ohne Abhängigkeiten)
     │   ├── model/                            # Datenklassen (Records), keine Logik
     │   │   └── Address, Seller, Customer, BillingPeriod, InvoiceRequest, Invoice,
     │   │       Timesheet, ValidationResult
     │   ├── config/
     │   │   ├── Settings                      # Ausgabeordner, Template, Logo (reine Konfiguration)
     │   │   └── ConfigLoader                  # YAML → Settings, Seller, Customer (Jackson, direkt auf die Records)
-    │   ├── invoice/
-    │   │   ├── InvoiceCalculator             # ① Berechnung
-    │   │   ├── GermanFormat                  # Beträge/Datum im deutschen Format (für ② und ④)
-    │   │   └── InvoiceService                # Ablauf ①–⑪, kennt nur die Interfaces
+    │   ├── format/
+    │   │   └── GermanFormat                  # Beträge/Datum im deutschen Format (für ② und ④)
     │   ├── html/
     │   │   └── InvoiceHtmlRenderer + FreemarkerHtmlRenderer          # ②
     │   ├── pdf/
@@ -288,13 +288,19 @@ Grundsatz: **Jedes Interface liegt bei seiner Umsetzung** (geändert am 30.10.20
 Interfaces in einem `domain`-Package). Alles zu einem Thema, z. B. PDF, steht so in einem Package.
 `Seller` und `Customer` sind Fachbegriffe und liegen deshalb in `model`, obwohl sie aus der
 Konfiguration gelesen werden; sie gibt es nur einmal. In `config` liegt nur reine Konfiguration.
+Der **Kern liegt im obersten Package** (`de.steffendingel.einvoicegenerator`): `InvoiceService` steuert den
+Ablauf, `InvoiceCalculator` rechnet, `App` verdrahtet. `App` und `InvoiceService` bleiben getrennt, damit
+der Ablauf mit Ersatz-Umsetzungen (z. B. Archiv im Speicher) testbar ist; `InvoiceCalculator` bleibt eine
+eigene Klasse, damit die Berechnung (Rundung, Fälligkeit) ohne weitere Abhängigkeiten testbar ist.
 
 ### Abhängigkeiten zwischen den Packages
 
 - `model` hängt von keinem anderen Package ab.
-- `config`, `html`, `pdf`, `einvoice`, `archive` und `numbering` hängen nur von `model` ab, nicht voneinander.
-- `invoice` (Berechnung und Ablauf) kennt `model` und die **Interfaces** der Schritt-Packages, nicht
-  deren Umsetzungen.
+- `format` hängt nur von `model` ab.
+- `config`, `html`, `pdf`, `einvoice`, `archive` und `numbering` hängen nur von `model` (und `html` von
+  `format`) ab, nicht voneinander.
+- Im obersten Package gilt die Regel pro Klasse: `InvoiceService` und `InvoiceCalculator` kennen `model`,
+  `format` und die **Interfaces** der Schritt-Packages, nicht deren Umsetzungen.
 - `cli` und `App` kennen alle Packages und verbinden sie miteinander.
 
 ### Ablauf, Schritte und Interfaces (überarbeitet am 29.10.2026)
@@ -440,7 +446,7 @@ interface InvoiceNumberSource {
 }
 ```
 
-Ablauf in `invoice.InvoiceService` (kennt nur die Interfaces):
+Ablauf in `InvoiceService` (oberstes Package, kennt nur die Interfaces):
 
 ```java
 ValidationResult checkTimesheet(Timesheet timesheet);        // ⑤ + ⑥ probeweise, direkt nach der Eingabe
