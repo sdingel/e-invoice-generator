@@ -1,5 +1,7 @@
 package de.steffendingel.einvoicegenerator.model;
 
+import de.steffendingel.einvoicegenerator.InvoiceCalculator;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -29,6 +31,24 @@ public final class TestData {
                 new Address("Beispielweg 2", "54321", "Beispielstadt", "DE"),
                 null, "buchhaltung@example.com", hourlyRate, paymentTermDays,
                 "Beratungs- und Entwicklungsleistungen", Map.of("vertragsdatum", "15.01.2026"));
+    }
+
+    /** The invoice from the proof of concept: 37.5 h × 95.00 € = 3,562.50 € net, invoice number 302. */
+    public static Invoice invoice() {
+        return invoice(customer());
+    }
+
+    public static Invoice invoice(Customer customer) {
+        InvoiceRequest request = new InvoiceRequest(customer, BillingPeriod.of(YearMonth.of(2026, 10)),
+                new BigDecimal("37.5"), LocalDate.of(2026, 11, 2));
+        return new InvoiceCalculator(seller()).calculate(request, "302");
+    }
+
+    /** Copy of the example customer with other free fields. */
+    public static Customer customerWithFields(Map<String, String> fields) {
+        Customer c = customer();
+        return new Customer(c.id(), c.name(), c.address(), c.vatId(), c.email(), c.hourlyRate(),
+                c.paymentTermDays(), c.itemText(), fields);
     }
 
     public static InvoiceRequest request(String hours) {
