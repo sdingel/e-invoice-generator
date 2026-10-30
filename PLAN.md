@@ -1,6 +1,6 @@
 # e-invoice-generator – Planung
 
-Stand: 29.10.2026 · Status: PoC abgeschlossen, Interfaces festgelegt, Umsetzung noch nicht begonnen
+Stand: 30.10.2026 · Status: PoC abgeschlossen, Interfaces festgelegt, Umsetzung noch nicht begonnen
 
 Ein Kommandozeilen-Tool für Solo-Selbständige: erzeugt monatliche Rechnungen als hybride
 ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
@@ -252,46 +252,56 @@ e-invoice-generator/
 └── src/
     ├── main/java/de/steffendingel/einvoicegenerator/
     │   ├── App.java                          # main, verdrahtet alles
-    │   ├── domain/                           # Modell, Berechnung, Ablauf und alle Interfaces
-    │   │   ├── Seller, Customer, Address, BillingPeriod, InvoiceRequest, Invoice,
-    │   │   │   Timesheet, ValidationResult   (Records)
+    │   ├── model/                            # Datenklassen (Records), keine Logik
+    │   │   └── Address, Seller, Customer, BillingPeriod, InvoiceRequest, Invoice,
+    │   │       Timesheet, ValidationResult
+    │   ├── config/
+    │   │   ├── Settings                      # Ausgabeordner, Template, Logo (reine Konfiguration)
+    │   │   └── ConfigLoader                  # YAML → Settings, Seller, Customer (Jackson, direkt auf die Records)
+    │   ├── invoice/
     │   │   ├── InvoiceCalculator             # ① Berechnung
     │   │   ├── GermanFormat                  # Beträge/Datum im deutschen Format (für ② und ④)
-    │   │   ├── InvoiceService                # Ablauf ①–⑪, kennt nur Interfaces
-    │   │   └── Interfaces zu ②–⑪ (siehe unten)
-    │   ├── config/ConfigLoader.java          # YAML → Seller, Customer (Jackson, direkt auf die Records)
-    │   ├── html/FreemarkerHtmlRenderer.java  # ②
+    │   │   └── InvoiceService                # Ablauf ①–⑪, kennt nur die Interfaces
+    │   ├── html/
+    │   │   └── InvoiceHtmlRenderer + FreemarkerHtmlRenderer          # ②
     │   ├── pdf/
-    │   │   ├── OpenHtmlToPdfConverter.java   # ③
-    │   │   ├── PdfBoxTextVerifier.java       # ④
-    │   │   ├── PdfBoxPageAppender.java       # ⑤
-    │   │   └── VeraPdfValidator.java         # ⑥
-    │   ├── zugferd/
-    │   │   ├── ZugferdXmlGenerator.java      # ⑦ Invoice → Mustang → CII-XML (inkl. BG-24)
-    │   │   ├── ZugferdXmlEmbedder.java       # ⑧
-    │   │   └── MustangValidator.java         # ⑨
-    │   ├── archive/FileInvoiceArchive.java   # ⑩ Dateinamen, Duplikatprüfung, kein Überschreiben
-    │   ├── numbering/FileInvoiceNumberSource.java   # ⑪ Datei invoice-counter
-    │   └── cli/InteractiveDialog.java        # JLine
+    │   │   ├── HtmlToPdfConverter + OpenHtmlToPdfConverter           # ③
+    │   │   ├── PdfTextVerifier + PdfBoxTextVerifier                  # ④
+    │   │   ├── PdfPageAppender + PdfBoxPageAppender                  # ⑤
+    │   │   └── PdfAValidator + VeraPdfValidator                      # ⑥
+    │   ├── einvoice/                         # formatneutrale Interfaces, ZUGFeRD-Umsetzungen (später XRechnung)
+    │   │   ├── EInvoiceXmlGenerator + ZugferdXmlGenerator            # ⑦ Invoice → Mustang → CII-XML (inkl. BG-24)
+    │   │   ├── EInvoiceXmlEmbedder + ZugferdXmlEmbedder              # ⑧
+    │   │   └── EInvoiceValidator + MustangValidator                  # ⑨
+    │   ├── archive/
+    │   │   └── InvoiceArchive + FileInvoiceArchive                   # ⑩ Dateinamen, Duplikatprüfung, kein Überschreiben
+    │   ├── numbering/
+    │   │   └── InvoiceNumberSource + FileInvoiceNumberSource         # ① Nummer holen, ⑪ hochzählen
+    │   └── cli/InteractiveDialog             # JLine
     ├── main/resources/
     │   ├── templates/invoice.ftlh
     │   └── fonts/
     └── test/java/...
 ```
 
-Grundsatz: `domain` kennt weder PDF noch ZUGFeRD noch die Konsole, damit es gut testbar ist.
+Grundsatz: **Jedes Interface liegt bei seiner Umsetzung** (geändert am 30.10.2026, vorher lagen alle
+Interfaces in einem `domain`-Package). Alles zu einem Thema, z. B. PDF, steht so in einem Package.
+`Seller` und `Customer` sind Fachbegriffe und liegen deshalb in `model`, obwohl sie aus der
+Konfiguration gelesen werden; sie gibt es nur einmal. In `config` liegt nur reine Konfiguration.
 
 ### Abhängigkeiten zwischen den Packages
 
-- `domain` hängt von keinem anderen Package ab.
-- `config`, `html`, `pdf`, `zugferd`, `archive` und `numbering` hängen nur von `domain` ab, nicht voneinander.
+- `model` hängt von keinem anderen Package ab.
+- `config`, `html`, `pdf`, `einvoice`, `archive` und `numbering` hängen nur von `model` ab, nicht voneinander.
+- `invoice` (Berechnung und Ablauf) kennt `model` und die **Interfaces** der Schritt-Packages, nicht
+  deren Umsetzungen.
 - `cli` und `App` kennen alle Packages und verbinden sie miteinander.
 
 ### Ablauf, Schritte und Interfaces (überarbeitet am 29.10.2026)
 
 Jeder Verarbeitungsschritt im Diagramm der README hat eine Nummer und genau ein Interface mit klar
-definierter Eingabe und Ausgabe. Die Schritte lassen sich einzeln umsetzen und testen. Die Interfaces
-liegen in `domain`, die Umsetzungen in den anderen Packages, damit alle Abhängigkeiten zu `domain` zeigen.
+definierter Eingabe und Ausgabe. Die Schritte lassen sich einzeln umsetzen und testen. Interface und
+Umsetzung liegen jeweils im selben Package (siehe Projektstruktur).
 
 | Nr. | Schritt | Interface (Umsetzung) | Eingabe | Ausgabe |
 |---|---|---|---|---|
@@ -328,7 +338,7 @@ Konformität kaputt. Das stellt `InvoiceService` sicher.
 
 ### Signaturen
 
-Domänenmodell (Records, Werte unformatiert):
+Datenklassen in `model` (Records, Werte unformatiert):
 
 ```java
 record Address(String street, String zip, String city, String country) {}
@@ -358,54 +368,60 @@ record Timesheet(String fileName, String label, byte[] pdf) {}
 record ValidationResult(boolean valid, String summary, List<String> problems) {}
 ```
 
-Interfaces (Nummern wie im Diagramm):
+Konfiguration in `config`:
 
 ```java
-// ②
+record Settings(Seller seller, Path outputDir, Path logo, Path template) {}   // logo, template optional
+```
+
+Interfaces (Nummern wie im Diagramm, Package jeweils dabei):
+
+```java
+// ② html
 interface InvoiceHtmlRenderer {
     String renderHtml(Invoice invoice, List<String> attachmentLabels) throws IOException;
 }
 
-// ③
+// ③ pdf
 interface HtmlToPdfConverter {
     /** Converts XHTML into a PDF/A-3b document with embedded fonts. */
     byte[] convert(String xhtml) throws IOException;
 }
 
-// ④
+// ④ pdf
 interface PdfTextVerifier {
     /** Checks that all expected texts occur in the PDF (guards against silently missing fonts). */
     ValidationResult verify(byte[] pdf, List<String> expectedTexts) throws IOException;
 }
 
-// ⑤
+// ⑤ pdf
 interface PdfPageAppender {
     /** Appends all pages of the attachments; metadata and output intent of the base document are kept. */
     byte[] append(byte[] basePdf, List<byte[]> attachmentPdfs) throws IOException;
 }
 
-// ⑥
+// ⑥ pdf
 interface PdfAValidator {
     ValidationResult validate(byte[] pdf) throws IOException;
 }
 
-// ⑦
+// ⑦ einvoice
 interface EInvoiceXmlGenerator {
     byte[] generateXml(Invoice invoice, List<Timesheet> timesheets) throws IOException;
 }
 
-// ⑧
+// ⑧ einvoice
 interface EInvoiceXmlEmbedder {
     /** Embeds the XML into the PDF/A document and writes the PDF/A-3b and e-invoice metadata. */
     byte[] embed(byte[] pdf, byte[] xml) throws IOException;
 }
 
-// ⑨
+// ⑨ einvoice
 interface EInvoiceValidator {
     ValidationResult validate(byte[] eInvoice) throws IOException;
 }
 
-// ⑩
+// ⑩ archive
 interface InvoiceArchive {
     /** Existing invoice for the same customer and period (warning about double billing). */
     Optional<String> findExisting(String customerId, BillingPeriod period) throws IOException;
@@ -414,7 +430,7 @@ interface InvoiceArchive {
     String store(Invoice invoice, byte[] eInvoice) throws IOException;
 }
 
-// ① (Nummer holen) und ⑪
+// ① (Nummer holen) und ⑪ numbering
 interface InvoiceNumberSource {
     /** Next free number, without reserving it. */
     String peekNext() throws IOException;
@@ -424,7 +440,7 @@ interface InvoiceNumberSource {
 }
 ```
 
-Ablauf in `InvoiceService` (kennt nur die Interfaces):
+Ablauf in `invoice.InvoiceService` (kennt nur die Interfaces):
 
 ```java
 ValidationResult checkTimesheet(Timesheet timesheet);        // ⑤ + ⑥ probeweise, direkt nach der Eingabe
