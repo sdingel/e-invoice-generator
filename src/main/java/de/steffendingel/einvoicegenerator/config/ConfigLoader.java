@@ -3,7 +3,6 @@ package de.steffendingel.einvoicegenerator.config;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.cfg.CoercionAction;
 import com.fasterxml.jackson.databind.cfg.CoercionInputShape;
@@ -15,16 +14,11 @@ import de.steffendingel.einvoicegenerator.model.Customer;
 import de.steffendingel.einvoicegenerator.model.Seller;
 
 import java.io.IOException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.RecordComponent;
-import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -34,7 +28,9 @@ import java.util.stream.Collectors;
  * Reads {@code settings.yaml} and {@code customers.yaml}. The YAML is mapped directly onto the records
  * of the model; their constructors validate the values.
  *
- * <p>Unknown keys (typos) and missing numbers are reported as errors. Text values that YAML reads as
+ * <p>Unknown keys (typos) and missing numbers are reported as errors. Note: a typo in a required key
+ * (e.g. {@code hourlyRat}) is reported as the missing key ({@code hourlyRate must not be null}), because
+ * Jackson calls the record constructor before it reports unknown keys. Text values that YAML reads as
  * numbers must be quoted, e.g. {@code zip: "01067"}: unquoted, YAML would drop the leading zero.
  * Paths may start with "~" (home directory) or be relative to the directory of {@code settings.yaml}.
  */
@@ -119,42 +115,12 @@ public final class ConfigLoader {
             throw new ConfigException(file + ": file is empty");
         }
         try {
-            // Check keys first: for records, Jackson reports unknown keys only after calling the
-            // constructor, so a typo in a required key would show up as "... must not be null"
-            checkKeys(mapper.readTree(content), type, "", file);
             return mapper.readValue(content, type);
         } catch (JsonMappingException e) {
             throw new ConfigException(file + ": " + describe(e), e);
         } catch (JacksonException e) {
             throw new ConfigException(file + ": invalid YAML: " + e.getOriginalMessage(), e);
         }
-    }
-
-    /** Reports keys that do not match a component of the target record, recursively. */
-    private static void checkKeys(JsonNode node, Type type, String path, Path file) throws ConfigException {
-        if (node == null || node.isNull()) {
-            return;
-        }
-        if (type instanceof Class<?> recordType && recordType.isRecord() && node.isObject()) {
-            Map<String, Type> components = new LinkedHashMap<>();
-            for (RecordComponent component : recordType.getRecordComponents()) {
-                components.put(component.getName(), component.getGenericType());
-            }
-            for (Map.Entry<String, JsonNode> entry : node.properties()) {
-                String key = entry.getKey();
-                String keyPath = path.isEmpty() ? key : path + "." + key;
-                if (!components.containsKey(key)) {
-                    throw new ConfigException(file + ": " + keyPath + ": unknown key \"" + key
-                            + "\" (allowed: " + String.join(", ", components.keySet()) + ")");
-                }
-                checkKeys(entry.getValue(), components.get(key), keyPath, file);
-            }
-        } else if (type instanceof ParameterizedType listType && listType.getRawType() == List.class && node.isArray()) {
-            for (int i = 0; i < node.size(); i++) {
-                checkKeys(node.get(i), listType.getActualTypeArguments()[0], path + "[" + i + "]", file);
-            }
-        }
-        // Maps (free fields) and simple values have no fixed keys
     }
 
     /** E.g. "customers[1].hourlyRate: hourlyRate must be positive: 0 (line 14)". */
