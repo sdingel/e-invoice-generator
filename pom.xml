@@ -19,6 +19,8 @@
         <mustang.version>2.26.0</mustang.version>
         <openhtmltopdf.version>1.1.100</openhtmltopdf.version>
         <freemarker.version>2.3.35</freemarker.version>
+        <!-- Same version as brought in by Mustang -->
+        <jackson.version>2.22.2</jackson.version>
         <commons-logging.version>1.4.0</commons-logging.version>
         <junit.version>6.1.3</junit.version>
         <assertj.version>3.27.7</assertj.version>
@@ -69,6 +71,16 @@
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
             <version>${freemarker.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!-- Tests -->

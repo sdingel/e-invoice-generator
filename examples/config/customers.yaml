@@ -1,0 +1,29 @@
+# Example customers (fictitious data). Copy to your configuration directory and adjust.
+
+customers:
+  - id: beispiel                      # short identifier, used in file names
+    name: Beispiel GmbH
+    address:
+      street: Beispielweg 2
+      zip: "54321"                    # always quoted
+      city: Beispielstadt
+      country: DE
+    vatId: DE987654321                # optional
+    email: buchhaltung@example.com    # optional, for sending invoices later
+    hourlyRate: 95.00                 # net, in EUR
+    paymentTermDays: 30
+    itemText: Beratungs- und Entwicklungsleistungen
+    fields:                           # optional: free placeholders for the template
+      vertragsdatum: "15.01.2026"
+      ansprechpartner: "z. Hd. Erika Musterfrau"
+
+  - id: muster
+    name: Muster AG
+    address:
+      street: Musterallee 3
+      zip: "01067"
+      city: Dresden
+      country: DE
+    hourlyRate: 110
+    paymentTermDays: 14
+    itemText: Softwareentwicklung

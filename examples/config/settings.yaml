@@ -1,0 +1,23 @@
+# Example settings (fictitious data). Copy to your configuration directory and adjust.
+#
+# Only data that is also needed in the e-invoice XML belongs here. Display-only details such as
+# phone number, website or bank name are part of the invoice template.
+
+seller:
+  name: Max Mustermann
+  address:
+    street: Musterstraße 1
+    zip: "12345"            # always quoted: unquoted, YAML would drop leading zeros (e.g. 01067)
+    city: Musterstadt
+    country: DE             # ISO 3166-1 alpha-2
+  vatId: DE123456789        # VAT ID and/or tax number (at least one is required)
+  taxNumber:
+  iban: DE89 3704 0044 0532 0130 00
+  bic: COBADEFFXXX
+  email: max@example.com
+
+# Paths: "~/" is the home directory, relative paths are relative to this file.
+# (A bare "~" means "empty" in YAML, so always write "~/...".)
+outputDir: ~/rechnungen
+logo:                       # optional, e.g. logo.svg
+template:                   # optional, e.g. invoice.ftlh (otherwise the built-in template is used)

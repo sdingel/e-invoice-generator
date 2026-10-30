@@ -56,7 +56,8 @@ später Unterbefehle wie `send` dazukommen.
 
 ## 3. Konfiguration
 
-Drei Dateien (Ablageort siehe offene Punkte, Vorschlag: `~/rechnungen/config/`).
+Drei Dateien (Ablageort siehe offene Punkte, Vorschlag: `~/rechnungen/config/`). Kommentierte Beispiele
+liegen in `examples/config/`; ein Test stellt sicher, dass sie gültig bleiben.
 
 ### `settings.yaml`
 
@@ -477,7 +478,10 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
    - ✔ Datenklassen in `model`, ① `InvoiceCalculator`, `GermanFormat`, mit Tests (30.10.2026).
      Festgelegt: Rechnungsdatum standardmäßig heute; Leistungszeitraum standardmäßig der Vormonat des
      Rechnungsdatums; Fälligkeit = Rechnungsdatum + Zahlungsziel, ohne Verschiebung auf einen Werktag.
-   - Konfiguration: `Settings`, `ConfigLoader` (YAML) mit Tests.
+   - ✔ Konfiguration: `Settings`, `ConfigLoader` (YAML) mit Tests, Beispieldateien in `examples/config/`
+     (30.10.2026). Unbekannte Schlüssel (Tippfehler), fehlende Zahlen und Texte ohne Anführungszeichen,
+     die YAML als Zahl liest (PLZ mit führender Null), werden mit Pfad gemeldet. Ein einzelnes `~` ist in
+     YAML „leer“; das Home-Verzeichnis daher als `~/…` schreiben.
 3. FreeMarker-Beispieltemplate → PDF/A (mit Logo-Unterstützung und HTML-Vorschau).
 4. Stundennachweis: probeweise anhängen und mit veraPDF prüfen, Seiten anhängen, BG-24-Einbettung im XML.
 5. Interaktiver Dialog (JLine), Zähler, Ablage, Abschlussvalidierung.

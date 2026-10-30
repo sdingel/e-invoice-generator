@@ -122,6 +122,13 @@ mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.Po
     -Dexec.args="target/poc /path/to/timesheet.pdf"
 ```
 
+## Configuration
+
+The tool reads two YAML files: `settings.yaml` (seller data, output directory, optional logo and
+template) and `customers.yaml` (customers with hourly rate, payment term, line item text and free
+placeholders for the template). Commented examples with fictitious data are in
+[`examples/config/`](examples/config/).
+
 ## Fonts
 
 The template uses [Carlito](https://github.com/googlefonts/carlito), which is metric-compatible with
