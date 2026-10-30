@@ -474,6 +474,10 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
 1. ✔ **PoC (Proof of Concept)**, erledigt am 27.10.2026 (Ergebnisse siehe 11).
    ✔ **Methodensignaturen der Interfaces** festgelegt am 29.10.2026 (siehe 8).
 2. Domänenmodell + Laden der YAML-Dateien (+ Tests für die Berechnung).
+   - ✔ Datenklassen in `model`, ① `InvoiceCalculator`, `GermanFormat`, mit Tests (30.10.2026).
+     Festgelegt: Rechnungsdatum standardmäßig heute; Leistungszeitraum standardmäßig der Vormonat des
+     Rechnungsdatums; Fälligkeit = Rechnungsdatum + Zahlungsziel, ohne Verschiebung auf einen Werktag.
+   - Konfiguration: `Settings`, `ConfigLoader` (YAML) mit Tests.
 3. FreeMarker-Beispieltemplate → PDF/A (mit Logo-Unterstützung und HTML-Vorschau).
 4. Stundennachweis: probeweise anhängen und mit veraPDF prüfen, Seiten anhängen, BG-24-Einbettung im XML.
 5. Interaktiver Dialog (JLine), Zähler, Ablage, Abschlussvalidierung.

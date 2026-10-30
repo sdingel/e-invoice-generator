@@ -110,7 +110,7 @@ Notes:
 Requirements: Java 21, Maven 3.9.
 
 ```sh
-mvn compile
+mvn verify    # build and run the tests
 
 # proof of concept, output in target/poc/
 mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.PocMain

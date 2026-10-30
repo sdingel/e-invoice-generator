@@ -31,6 +31,6 @@ timesheet. The plan and all decisions are in `PLAN.md`.
 
 ## Build and run
 
-- Build: `mvn compile`
+- Build and test: `mvn verify` (runs the tests and the enforcer rules); tests only: `mvn test`
 - Proof of concept: `mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.PocMain`
   (optional `-Dexec.args="<output dir> <timesheet.pdf>"`), output in `target/poc/`.
