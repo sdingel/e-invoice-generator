@@ -1,4 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<#--
+  Built-in invoice template (FreeMarker, output: XHTML for openhtmltopdf).
+
+  To use your own data and layout: copy this file to your configuration directory, adjust it and set
+  "template:" in settings.yaml.
+
+  IMPORTANT: PDF and XML must not contradict each other. Everything that is also in the e-invoice XML
+  must come from the variables below, never typed in: seller name, address, e-mail, VAT ID / tax number,
+  IBAN, BIC; all customer and invoice data. Only details that are NOT in the XML may be written directly
+  into the template: job title, phone, mobile, website, bank name (marked "display only" below).
+
+  Variables:
+    invoice      number, invoiceDate, dueDate, period.from/to, hours, hourlyRate, netAmount, vatRate,
+                 vatAmount, grossAmount
+    seller       name, address.street/zip/city/country, vatId, taxNumber, iban, bic, email
+    customer     name, address.street/zip/city/country, vatId, email, itemText,
+                 fields.<key> (free placeholders from customers.yaml, may be missing)
+    attachments  list of attachment labels, e.g. "Stundennachweis 10/2026"
+    logo         file URI of the logo (missing if no logo is configured)
+    format       money(), decimal(), percent(), date(), shortDate(), iban()
+
+  Missing optional values: ${x!} prints nothing, <#if x??>...</#if> tests for presence.
+  Text is escaped automatically (.ftlh), e.g. "&" becomes "&amp;".
+-->
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="de">
 <head>
@@ -24,8 +48,6 @@
   .letterhead td { vertical-align: top; padding: 0; }
   .letterhead .logo { width: 1.9cm; height: 1.9cm; padding-right: 0.25cm; }
   .letterhead .logo img { width: 1.9cm; height: 1.9cm; }
-  .logo-placeholder { width: 1.9cm; height: 1.2cm; padding-top: 0.7cm; background: #b4b4b4;
-                      color: #ffffff; font-size: 8pt; text-align: center; }
   .letterhead .sender { font-size: 10.5pt; line-height: 1.3; }
 
   /* Address field */
@@ -62,6 +84,8 @@
   .footer .mark div { width: 0.33cm; height: 0.33cm; background: #e2231a; margin-left: auto; }
 </style>
 </head>
+<#-- Postal code with the "D-" prefix of the original layout for German addresses -->
+<#function cityLine address><#return (address.country == "DE")?then("D-", "") + address.zip + " " + address.city></#function>
 <body>
 
 <div class="footer">
@@ -69,21 +93,23 @@
     <tr>
       <td style="width: 5.2cm">
         ${seller.name}<br/>
-        ${seller.street}<br/>
-        ${seller.countryPrefix}${seller.zip} ${seller.city}<br/>
+        ${seller.address.street}<br/>
+        ${cityLine(seller.address)}<br/>
         <#if seller.vatId??>USt-IdNr.: ${seller.vatId}<#else>Steuernummer: ${seller.taxNumber}</#if>
       </td>
       <td style="width: 5.5cm">
-        <#if seller.phone??>Tel. ${seller.phone}<br/></#if>
-        <#if seller.mobile??>Mobil ${seller.mobile}<br/></#if>
+        <#-- display only (not in the XML): -->
+        Tel. +49 000 0000000<br/>
+        Mobil +49 000 1111111<br/>
         ${seller.email}<br/>
-        <#if seller.web??>${seller.web}</#if>
+        www.example.com
       </td>
       <td>
         Bankverbindung:<br/>
-        ${seller.bankName}<br/>
-        IBAN: ${seller.iban}<br/>
-        BIC: ${seller.bic}
+        <#-- display only (not in the XML): -->
+        Beispielbank Musterstadt<br/>
+        IBAN: ${format.iban(seller.iban)}<br/>
+        <#if seller.bic??>BIC: ${seller.bic}</#if>
       </td>
       <td class="mark"><div></div></td>
     </tr>
@@ -92,40 +118,37 @@
 
 <table class="letterhead">
   <tr>
-    <td class="logo">
-      <#if logoUri??>
-        <img src="${logoUri}" alt="Logo"/>
-      <#else>
-        <div class="logo-placeholder">LOGO</div>
-      </#if>
-    </td>
+    <#if logo??>
+    <td class="logo"><img src="${logo}" alt="Logo"/></td>
+    </#if>
     <td class="sender">
       ${seller.name}<br/>
-      <#if seller.tagline??>${seller.tagline}<br/></#if>
-      ${seller.street}<br/>
-      ${seller.countryPrefix}${seller.zip} ${seller.city}
+      <#-- display only (not in the XML): -->
+      Freiberuflicher Beispiel-Berater<br/>
+      ${seller.address.street}<br/>
+      ${cityLine(seller.address)}
     </td>
   </tr>
 </table>
 
 <div class="address-block">
-  <div class="return-address">${seller.name}, ${seller.street}, ${seller.countryPrefix}${seller.zip} ${seller.city}</div>
+  <div class="return-address">${seller.name}, ${seller.address.street}, ${cityLine(seller.address)}</div>
   <div class="recipient">
     ${customer.name}<br/>
-    <#if customer.contact??>${customer.contact}<br/></#if>
-    ${customer.street}
-    <div class="city">${customer.zip} ${customer.city}</div>
+    <#if customer.fields.ansprechpartner??>${customer.fields.ansprechpartner}<br/></#if>
+    ${customer.address.street}
+    <div class="city">${customer.address.zip} ${customer.address.city}</div>
   </div>
 </div>
 
 <div class="content">
-  <div class="invoice-date">Rechnungsdatum: ${invoice.date}</div>
+  <div class="invoice-date">Rechnungsdatum: ${format.date(invoice.invoiceDate)}</div>
 
   <p class="title">Rechnung Nr. ${invoice.number}</p>
 
   <p>Sehr geehrte Damen und Herren,</p>
 
-  <p><#if invoice.contractDate??>gemäß unserem Vertrag vom ${invoice.contractDate} erlaube<#else>hiermit erlaube</#if> ich mir, folgende Leistungen zu berechnen:</p>
+  <p><#if customer.fields.vertragsdatum??>gemäß unserem Vertrag vom ${customer.fields.vertragsdatum} erlaube<#else>hiermit erlaube</#if> ich mir, folgende Leistungen zu berechnen:</p>
 
   <table class="items">
     <thead>
@@ -140,29 +163,29 @@
     </thead>
     <tbody>
       <tr class="item">
-        <td>${invoice.itemText}</td>
-        <td class="center">${invoice.periodFrom} – ${invoice.periodTo}</td>
-        <td class="center">${invoice.unit}</td>
-        <td class="center">${invoice.quantity}</td>
-        <td class="num">${invoice.unitPrice}</td>
-        <td class="num">${invoice.lineTotal}</td>
+        <td>${customer.itemText}</td>
+        <td class="center">${format.shortDate(invoice.period.from)} – ${format.shortDate(invoice.period.to)}</td>
+        <td class="center">Stunden</td>
+        <td class="center">${format.decimal(invoice.hours)}</td>
+        <td class="num">${format.money(invoice.hourlyRate)}</td>
+        <td class="num">${format.money(invoice.netAmount)}</td>
       </tr>
       <tr>
         <td colspan="5">Summe (netto)</td>
-        <td class="num">${invoice.netTotal}</td>
+        <td class="num">${format.money(invoice.netAmount)}</td>
       </tr>
       <tr>
-        <td colspan="5">Umsatzsteuer ${invoice.vatRate}</td>
-        <td class="num">${invoice.vatTotal}</td>
+        <td colspan="5">Umsatzsteuer ${format.percent(invoice.vatRate)}</td>
+        <td class="num">${format.money(invoice.vatAmount)}</td>
       </tr>
       <tr class="total">
         <td colspan="5">Rechnungsbetrag</td>
-        <td class="num amount">${invoice.grossTotal}</td>
+        <td class="num amount">${format.money(invoice.grossAmount)}</td>
       </tr>
     </tbody>
   </table>
 
-  <p>Bitte überweisen Sie den Rechnungsbetrag bis zum ${invoice.dueDate} auf das unten angegebene Konto.<br/>
+  <p>Bitte überweisen Sie den Rechnungsbetrag bis zum ${format.shortDate(invoice.dueDate)} auf das unten angegebene Konto.<br/>
   Vielen Dank für Ihren Auftrag!</p>
 
   <p>Mit freundlichen Grüßen</p>

@@ -38,6 +38,13 @@ class GermanFormatTest {
     }
 
     @Test
+    void formatsIbanInGroupsOfFour() {
+        assertThat(GermanFormat.iban("DE89370400440532013000")).isEqualTo("DE89 3704 0044 0532 0130 00");
+        assertThat(GermanFormat.iban("DE89 3704 0044 0532 0130 00")).isEqualTo("DE89 3704 0044 0532 0130 00");
+        assertThat(GermanFormat.iban("AT611904300234573201")).isEqualTo("AT61 1904 3002 3457 3201");
+    }
+
+    @Test
     void formatsDates() {
         LocalDate date = LocalDate.of(2026, 11, 2);
 

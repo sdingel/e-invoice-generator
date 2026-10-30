@@ -483,6 +483,15 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      die YAML als Zahl liest (PLZ mit führender Null), werden mit Pfad gemeldet. Ein einzelnes `~` ist in
      YAML „leer“; das Home-Verzeichnis daher als `~/…` schreiben.
 3. FreeMarker-Beispieltemplate → PDF/A (mit Logo-Unterstützung und HTML-Vorschau).
+   - ✔ ② `InvoiceHtmlRenderer` / `FreemarkerHtmlRenderer` mit Tests (30.10.2026). Das Template bekommt die
+     Records (`invoice`, `seller`, `customer`), die Anlagen, das optionale Logo (Datei-URI) und
+     `GermanFormat` als `format` (Variante A: Formatierung per `${format.money(...)}` im Template).
+     Das eingebaute Template enthält nur Beispieldaten; eigene Daten in einer Kopie, die per `template:`
+     in `settings.yaml` eingebunden wird. **Regel:** Alles, was auch im XML steht (Name, Anschrift,
+     E-Mail, USt-IdNr./Steuernummer, IBAN, BIC, Kunden- und Rechnungsdaten), kommt aus Variablen; fest
+     im Template stehen nur reine Anzeige-Angaben (Tätigkeitsbezeichnung, Telefon, Mobil, Website,
+     Bankname), die im XML nicht vorkommen. Der PoC nutzt eine eigene Template-Kopie (`resources/poc/`).
+   - ③ PDF/A erzeugen und ④ Text zurücklesen.
 4. Stundennachweis: probeweise anhängen und mit veraPDF prüfen, Seiten anhängen, BG-24-Einbettung im XML.
 5. Interaktiver Dialog (JLine), Zähler, Ablage, Abschlussvalidierung.
 

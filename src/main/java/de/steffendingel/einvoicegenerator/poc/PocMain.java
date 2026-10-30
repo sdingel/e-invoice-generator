@@ -181,7 +181,7 @@ public class PocMain {
 
     static String renderTemplate(String name, Map<String, Object> model) throws Exception {
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_35);
-        cfg.setClassForTemplateLoading(PocMain.class, "/templates");
+        cfg.setClassForTemplateLoading(PocMain.class, "/poc");
         cfg.setDefaultEncoding("UTF-8");
         cfg.setRecognizeStandardFileExtensions(true); // .ftlh → HTML-Escaping
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
@@ -200,7 +200,7 @@ public class PocMain {
                 .useFastMode()
                 .usePdfAConformance(conformance)
                 .useColorProfile(ICC_Profile.getInstance(ColorSpace.CS_sRGB).getData())
-                .withHtmlContent(xhtml, PocMain.class.getResource("/templates/").toString())
+                .withHtmlContent(xhtml, PocMain.class.getResource("/poc/").toString())
                 .toStream(bytes);
         font(builder, "Carlito-Regular.ttf", 400, FontStyle.NORMAL);
         font(builder, "Carlito-Bold.ttf", 700, FontStyle.NORMAL);

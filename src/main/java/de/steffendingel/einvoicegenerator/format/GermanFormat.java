@@ -53,4 +53,10 @@ public final class GermanFormat {
     public static String shortDate(LocalDate date) {
         return SHORT_DATE.format(Objects.requireNonNull(date, "date must not be null"));
     }
+
+    /** "DE89 3704 0044 0532 0130 00" (groups of four, as printed on invoices). */
+    public static String iban(String iban) {
+        String compact = Objects.requireNonNull(iban, "iban must not be null").replace(" ", "");
+        return compact.replaceAll("(.{4})(?!$)", "$1 ");
+    }
 }
