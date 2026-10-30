@@ -1,5 +1,7 @@
 # E-Invoice Generator
 
+[![Build](https://github.com/sdingel/e-invoice-generator/actions/workflows/build.yml/badge.svg)](https://github.com/sdingel/e-invoice-generator/actions/workflows/build.yml)
+
 Command-line tool for freelancers that creates monthly invoices as hybrid **ZUGFeRD e-invoices**
 (PDF/A-3 with embedded XML, profile EN16931), including a timesheet.
 
