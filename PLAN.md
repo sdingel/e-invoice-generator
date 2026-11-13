@@ -568,6 +568,16 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
        Rechnung (Producer/Creator, z. B. „E-Invoice Generator 0.1.0“), dazu nach Möglichkeit der Link
        https://github.com/sdingel/e-invoice-generator (z. B. im Creator-Tool-Eintrag der XMP-Metadaten).
        Version aus der `pom.xml` (z. B. über das Manifest), damit sie nur an einer Stelle steht.
+   - **Danach geplant** (aufgenommen am 14.11.2026, Details noch zu klären):
+     - **PoC aus dem Code entfernen:** Package `de.steffendingel.einvoicegenerator.poc`, Template-Kopie in
+       `src/main/resources/poc/`, die PoC-Abschnitte in README und `CLAUDE.md`. Die Erkenntnisse in
+       Abschnitt 11 bleiben als Dokumentation erhalten.
+     - **Nutzung durch englischsprachige Nutzer prüfen:** Was heute deutsch ist bzw. gemischt erscheint, z. B.
+       der Konsolendialog, die Fehlermeldungen (teils deutsch aus dem Dialog, teils englisch aus den
+       einzelnen Schritten), das eingebaute Rechnungs-Template, das Standard-Dateinamen-Template
+       („Rechnung … für …“), der Zahlungshinweis im XML („Zahlbar bis …“), das deutsche Zahlen- und
+       Datumsformat (`GermanFormat`). Zu klären: Sprache einstellbar (z. B. `language:` in `settings.yaml`)
+       oder durchgehend englisch mit deutschen Rechnungsinhalten?
 
 ## 10. Offene Punkte / Risiken
 
