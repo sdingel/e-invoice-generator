@@ -11,7 +11,8 @@ import java.util.Objects;
 /**
  * A customer as configured in {@code customers.yaml}.
  *
- * @param id              short identifier, used e.g. in file names
+ * @param id              short identifier, e.g. for selecting the customer in the dialog
+ * @param shortName       short name, e.g. for file names; optional, defaults to {@code name}
  * @param vatId           VAT identification number of the customer, optional
  * @param email           invoice e-mail address, optional
  * @param hourlyRate      net price per hour
@@ -19,13 +20,14 @@ import java.util.Objects;
  * @param itemText        text of the single invoice line
  * @param fields          free placeholders for the template (e.g. contract date), never {@code null}
  */
-public record Customer(String id, String name, Address address, String vatId, String email,
+public record Customer(String id, String name, String shortName, Address address, String vatId, String email,
                        BigDecimal hourlyRate, int paymentTermDays, String itemText,
                        Map<String, String> fields) {
 
     public Customer {
         requireText(id, "id");
         requireText(name, "name");
+        shortName = optionalText(shortName) == null ? name : shortName;
         Objects.requireNonNull(address, "address must not be null");
         vatId = optionalText(vatId);
         email = optionalText(email);

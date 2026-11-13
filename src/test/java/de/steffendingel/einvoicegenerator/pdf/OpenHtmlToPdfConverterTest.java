@@ -116,7 +116,7 @@ class OpenHtmlToPdfConverterTest {
         @Test
         void supportsSpecialCharacters() throws IOException {
             Customer example = TestData.customer();
-            Customer customer = new Customer(example.id(), "Müller & Söhne – Łódź „Test“",
+            Customer customer = new Customer(example.id(), "Müller & Söhne – Łódź „Test“", null,
                     new Address("Weg 1", "54321", "Ort", "DE"), null, null, example.hourlyRate(),
                     example.paymentTermDays(), "Beratung", Map.of());
             String xhtml = new FreemarkerHtmlRenderer().renderHtml(TestData.invoice(customer), ATTACHMENTS);

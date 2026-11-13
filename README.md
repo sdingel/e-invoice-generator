@@ -129,6 +129,11 @@ template) and `customers.yaml` (customers with hourly rate, payment term, line i
 placeholders for the template). Commented examples with fictitious data are in
 [`examples/config/`](examples/config/).
 
+The next invoice number is read from the file `invoice-counter` next to `settings.yaml`; it must
+exist (e.g. with the content `302`). Invoices are stored in the output directory under a file name built
+from a template (setting `fileName`), by default e.g.
+`2026-11-09 Max Mustermann Beispielkunde Rechnung 304 für 2026-10.pdf`.
+
 ## Fonts and logo
 
 The template uses [Carlito](https://github.com/googlefonts/carlito), which is metric-compatible with

@@ -36,6 +36,9 @@ import java.util.stream.Collectors;
  */
 public final class ConfigLoader {
 
+    /** Name of the file with the next invoice number, in the directory of {@code settings.yaml}. */
+    public static final String COUNTER_FILE_NAME = "invoice-counter";
+
     private final ObjectMapper mapper = createMapper();
     private final Path homeDir;
 
@@ -50,7 +53,7 @@ public final class ConfigLoader {
     }
 
     // Structure of the files; paths are resolved afterwards
-    private record SettingsFile(Seller seller, String outputDir, String logo, String template) {}
+    private record SettingsFile(Seller seller, String outputDir, String logo, String template, String fileName) {}
 
     private record CustomersFile(List<Customer> customers) {}
 
@@ -69,7 +72,8 @@ public final class ConfigLoader {
         }
         return new Settings(raw.seller(), outputDir,
                 existingFile(raw.logo(), "logo", baseDir, file),
-                existingFile(raw.template(), "template", baseDir, file));
+                existingFile(raw.template(), "template", baseDir, file),
+                raw.fileName(), baseDir.resolve(COUNTER_FILE_NAME));
     }
 
     public List<Customer> loadCustomers(Path file) throws ConfigException {

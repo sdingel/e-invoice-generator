@@ -21,3 +21,10 @@ seller:
 outputDir: ~/rechnungen
 logo:                       # optional, e.g. logo.svg
 template:                   # optional, e.g. invoice.ftlh (otherwise the built-in template is used)
+
+# File name of the invoices (optional). Placeholders: {invoiceDate} (2026-11-09), {period} (2026-10,
+# start of the billing period), {number}, {sellerName}, {customerShortName}, {customerName}, {customerId}.
+# {number} is required. Default:
+fileName: "{invoiceDate} {sellerName} {customerShortName} Rechnung {number} für {period}.pdf"
+
+# The next invoice number is read from the file "invoice-counter" next to this file (e.g. content: 302).

@@ -180,7 +180,7 @@ class ZugferdXmlGeneratorTest {
         @Test
         void buyerVatIdIsIncludedIfConfigured() throws Exception {
             Customer example = TestData.customer();
-            Customer customer = new Customer(example.id(), example.name(), example.address(), "DE987654321",
+            Customer customer = new Customer(example.id(), example.name(), null, example.address(), "DE987654321",
                     null, example.hourlyRate(), example.paymentTermDays(), example.itemText(), Map.of());
 
             Xml withVatId = new Xml(new ZugferdXmlGenerator().generateXml(TestData.invoice(customer), List.of()));
@@ -192,7 +192,7 @@ class ZugferdXmlGeneratorTest {
         @Test
         void keepsSpecialCharacters() throws Exception {
             Customer example = TestData.customer();
-            Customer customer = new Customer(example.id(), "Müller & Söhne <GmbH>",
+            Customer customer = new Customer(example.id(), "Müller & Söhne <GmbH>", null,
                     new Address("Weg \"A\" 1", "01067", "Dresden", "DE"), null, null, example.hourlyRate(),
                     example.paymentTermDays(), example.itemText(), Map.of());
 

@@ -68,6 +68,9 @@ class ConfigLoaderTest {
             assertThat(settings.outputDir()).isEqualTo(home.resolve("rechnungen").toAbsolutePath());
             assertThat(settings.logoFile()).isEmpty();
             assertThat(settings.templateFile()).isEmpty();
+            assertThat(settings.fileNameTemplate())
+                    .isEqualTo("{invoiceDate} {sellerName} {customerShortName} Rechnung {number} für {period}.pdf");
+            assertThat(settings.counterFile()).isEqualTo(EXAMPLES.resolve("invoice-counter").toAbsolutePath());
         }
 
         @Test
@@ -76,6 +79,7 @@ class ConfigLoaderTest {
 
             assertThat(customers).extracting(Customer::id).containsExactly("beispiel", "muster");
             Customer first = customers.get(0);
+            assertThat(first.shortName()).isEqualTo("Beispielkunde");
             assertThat(first.hourlyRate()).isEqualByComparingTo("95.00");
             assertThat(first.paymentTermDays()).isEqualTo(30);
             assertThat(first.fields()).containsEntry("vertragsdatum", "15.01.2026")
@@ -84,6 +88,7 @@ class ConfigLoaderTest {
             assertThat(second.address().zip()).isEqualTo("01067");
             assertThat(second.hourlyRate()).isEqualByComparingTo("110");
             assertThat(second.vatId()).isNull();
+            assertThat(second.shortName()).isEqualTo("Muster AG"); // defaults to the name
             assertThat(second.fields()).isEmpty();
         }
     }
@@ -113,6 +118,16 @@ class ConfigLoaderTest {
 
             assertThat(settings.outputDir()).isEqualTo(home.toAbsolutePath());
             assertThat(settings.templateFile()).contains(home.resolve("config/invoice.ftlh").toAbsolutePath());
+        }
+
+        @Test
+        void fileNameTemplateIsOptionalAndCounterFileIsNextToTheSettings() throws Exception {
+            Path file = write("settings.yaml", SELLER + "outputDir: out\n");
+
+            Settings settings = loader().loadSettings(file);
+
+            assertThat(settings.fileNameTemplate()).isNull();
+            assertThat(settings.counterFile()).isEqualTo(configDir.resolve("invoice-counter").toAbsolutePath());
         }
 
         @Test
