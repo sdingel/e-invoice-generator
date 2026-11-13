@@ -555,7 +555,29 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      Fortschritt ①–⑪ mit deutschen Texten. Exit-Codes: 0 erzeugt, 1 Fehler, 2 abgebrochen.
      Log-Ausgaben der Bibliotheken sind abgeschaltet (`slf4j-nop`, `XRLog`, java.util.logging).
      Die Zählerdatei wird beim Start geprüft, nicht erst nach allen Fragen.
-   - Ausliefern als ausführbares JAR (nächster Schritt).
+   - **Nächster Schritt: Ausliefern als ausführbares JAR** (Entscheidungen vom 14.11.2026, noch nicht umgesetzt):
+     - Ein JAR mit allen Bibliotheken (`maven-shade-plugin`), `target/e-invoice-generator.jar`.
+       Signaturdateien der Bibliotheken entfernen, `META-INF/services` zusammenführen (sonst findet z. B.
+       JLine sein Terminal nicht). Ein Test startet das fertige JAR (`--help` und ein kompletter Durchlauf).
+     - **Startskripte für Linux und Windows** (`e-invoice-generator` und `e-invoice-generator.cmd`), die
+       `java -jar …` aufrufen. Das Windows-Skript testet der Nutzer selbst (in der Cloud-Umgebung gibt es
+       kein Windows).
+     - **JAR auf GitHub bereitstellen:** der CI-Build hängt das JAR als Download an (Artefakt); Releases mit
+       Versionsnummer bei Bedarf später.
+     - **Versionsnummer:** `--version` zeigt sie an, die Hilfe ebenfalls. Sie kommt in die PDF-Metadaten jeder
+       Rechnung (Producer/Creator, z. B. „E-Invoice Generator 0.1.0“), dazu nach Möglichkeit der Link
+       https://github.com/sdingel/e-invoice-generator (z. B. im Creator-Tool-Eintrag der XMP-Metadaten).
+       Version aus der `pom.xml` (z. B. über das Manifest), damit sie nur an einer Stelle steht.
+   - **Danach geplant** (aufgenommen am 14.11.2026, Details noch zu klären):
+     - **PoC aus dem Code entfernen:** Package `de.steffendingel.einvoicegenerator.poc`, Template-Kopie in
+       `src/main/resources/poc/`, die PoC-Abschnitte in README und `CLAUDE.md`. Die Erkenntnisse in
+       Abschnitt 11 bleiben als Dokumentation erhalten.
+     - **Nutzung durch englischsprachige Nutzer prüfen:** Was heute deutsch ist bzw. gemischt erscheint, z. B.
+       der Konsolendialog, die Fehlermeldungen (teils deutsch aus dem Dialog, teils englisch aus den
+       einzelnen Schritten), das eingebaute Rechnungs-Template, das Standard-Dateinamen-Template
+       („Rechnung … für …“), der Zahlungshinweis im XML („Zahlbar bis …“), das deutsche Zahlen- und
+       Datumsformat (`GermanFormat`). Zu klären: Sprache einstellbar (z. B. `language:` in `settings.yaml`)
+       oder durchgehend englisch mit deutschen Rechnungsinhalten?
 
 ## 10. Offene Punkte / Risiken
 
