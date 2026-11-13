@@ -23,6 +23,9 @@
         <jackson.version>2.22.2</jackson.version>
         <verapdf.version>1.30.2</verapdf.version>
         <commons-logging.version>1.4.0</commons-logging.version>
+        <jline.version>4.7.0</jline.version>
+        <!-- Same version as slf4j-api, which Mustang brings in -->
+        <slf4j.version>2.0.18</slf4j.version>
         <junit.version>6.1.3</junit.version>
         <assertj.version>3.27.7</assertj.version>
 
@@ -88,6 +91,20 @@
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+
+        <!-- Console dialog: line editing, file name completion -->
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline</artifactId>
+            <version>${jline.version}</version>
+        </dependency>
+        <!-- Mustang logs via SLF4J; without a provider it prints warnings at every start. The tool reports
+             problems itself, so the libraries' log output is not needed. -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>${slf4j.version}</version>
         </dependency>
 
         <!-- Tests -->

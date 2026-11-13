@@ -5,14 +5,15 @@
 Command-line tool for freelancers that creates monthly invoices as hybrid **ZUGFeRD e-invoices**
 (PDF/A-3 with embedded XML, profile EN16931), including a timesheet.
 
-> **Status:** proof of concept done, implementation not started yet. Plan and decisions (German):
+> **Status:** usable from the command line (dialog), steps ① to ⑪ implemented. Plan and decisions (German):
 > [`PLAN.md`](PLAN.md).
 
 ## How an invoice is generated
 
 Each numbered processing step has one interface with a defined input and output (signatures in
 [`PLAN.md`](PLAN.md), section 8). The diagram shows the data flow; the proof of concept
-(`de.steffendingel.einvoicegenerator.poc.PocMain`) implements steps ② to ⑨ except ④.
+(`de.steffendingel.einvoicegenerator.poc.PocMain`) implemented steps ② to ⑨ except ④; the application
+now implements all steps (`InvoiceService`).
 
 Legend: blue parallelograms are inputs, grey parallelograms are intermediate results and output,
 rectangles are processing steps, hexagons are checks that abort on failure. Dashed shapes are planned
@@ -114,10 +115,19 @@ Requirements: Java 21, Maven 3.9.
 ```sh
 mvn verify    # build and run the tests
 
-# proof of concept, output in target/poc/
-mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.PocMain
+# start the dialog (configuration in ~/rechnungen/config, or --config <directory>)
+mvn -q compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.App
+mvn -q compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.App -Dexec.args="--config ~/my-config"
+```
 
-# with your own timesheet
+The dialog asks for customer, invoice date, billing period (month), hours and the timesheet (Tab completes
+file names), shows a summary and creates the e-invoice after confirmation, reporting each step ① to ⑪.
+Exit code: 0 invoice created, 1 error, 2 aborted.
+
+Proof of concept (throwaway), output in `target/poc/`:
+
+```sh
+mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.PocMain
 mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.PocMain \
     -Dexec.args="target/poc /path/to/timesheet.pdf"
 ```
