@@ -555,7 +555,19 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      Fortschritt ①–⑪ mit deutschen Texten. Exit-Codes: 0 erzeugt, 1 Fehler, 2 abgebrochen.
      Log-Ausgaben der Bibliotheken sind abgeschaltet (`slf4j-nop`, `XRLog`, java.util.logging).
      Die Zählerdatei wird beim Start geprüft, nicht erst nach allen Fragen.
-   - Ausliefern als ausführbares JAR (nächster Schritt).
+   - **Nächster Schritt: Ausliefern als ausführbares JAR** (Entscheidungen vom 14.11.2026, noch nicht umgesetzt):
+     - Ein JAR mit allen Bibliotheken (`maven-shade-plugin`), `target/e-invoice-generator.jar`.
+       Signaturdateien der Bibliotheken entfernen, `META-INF/services` zusammenführen (sonst findet z. B.
+       JLine sein Terminal nicht). Ein Test startet das fertige JAR (`--help` und ein kompletter Durchlauf).
+     - **Startskripte für Linux und Windows** (`e-invoice-generator` und `e-invoice-generator.cmd`), die
+       `java -jar …` aufrufen. Das Windows-Skript testet der Nutzer selbst (in der Cloud-Umgebung gibt es
+       kein Windows).
+     - **JAR auf GitHub bereitstellen:** der CI-Build hängt das JAR als Download an (Artefakt); Releases mit
+       Versionsnummer bei Bedarf später.
+     - **Versionsnummer:** `--version` zeigt sie an, die Hilfe ebenfalls. Sie kommt in die PDF-Metadaten jeder
+       Rechnung (Producer/Creator, z. B. „E-Invoice Generator 0.1.0“), dazu nach Möglichkeit der Link
+       https://github.com/sdingel/e-invoice-generator (z. B. im Creator-Tool-Eintrag der XMP-Metadaten).
+       Version aus der `pom.xml` (z. B. über das Manifest), damit sie nur an einer Stelle steht.
 
 ## 10. Offene Punkte / Risiken
 
