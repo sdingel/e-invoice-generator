@@ -40,9 +40,6 @@ final class FileNameTemplate {
             "customerName", invoice -> invoice.customer().name(),
             "customerId", invoice -> invoice.customer().id());
 
-    /** Placeholders that differ between invoices of the same customer and period. */
-    private static final Set<String> VARYING = Set.of("invoiceDate", "number", "sellerName");
-
     private final String template;
 
     /**
@@ -79,18 +76,27 @@ final class FileNameTemplate {
 
     /** Matches file names of any invoice for this customer and period (other date and number). */
     Pattern patternFor(Customer customer, BillingPeriod period) {
-        Map<String, String> fixed = Map.of(
+        return pattern(Map.of(
                 "period", MONTH.format(period.from()),
                 "customerShortName", customer.shortName(),
                 "customerName", customer.name(),
-                "customerId", customer.id());
+                "customerId", customer.id()));
+    }
+
+    /** Matches file names of any invoice with this number (any date, customer and period). */
+    Pattern patternForNumber(String number) {
+        return pattern(Map.of("number", number));
+    }
+
+    /** Placeholders in {@code fixed} must have that value; all others may have any value. */
+    private Pattern pattern(Map<String, String> fixed) {
         List<String> parts = new ArrayList<>();
         Matcher matcher = PLACEHOLDER.matcher(template);
         int last = 0;
         while (matcher.find()) {
             parts.add(Pattern.quote(template.substring(last, matcher.start())));
             String placeholder = matcher.group(1);
-            parts.add(VARYING.contains(placeholder) ? ".+?" : Pattern.quote(sanitize(fixed.get(placeholder))));
+            parts.add(fixed.containsKey(placeholder) ? Pattern.quote(sanitize(fixed.get(placeholder))) : ".+?");
             last = matcher.end();
         }
         parts.add(Pattern.quote(template.substring(last)));

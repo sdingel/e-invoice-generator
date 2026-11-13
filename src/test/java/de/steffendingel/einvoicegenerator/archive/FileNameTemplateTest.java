@@ -83,6 +83,16 @@ class FileNameTemplateTest {
         assertThat(pattern.matcher("2026-11-02 Max Mustermann Anderer Kunde Rechnung 302 für 2026-10.pdf").matches()).isFalse();
     }
 
+    @Test
+    void patternFindsInvoicesWithTheSameNumberOnly() {
+        var pattern = new FileNameTemplate(null).patternForNumber("302");
+
+        assertThat(pattern.matcher("2026-11-02 Max Mustermann Beispielkunde Rechnung 302 für 2026-10.pdf").matches()).isTrue();
+        assertThat(pattern.matcher("2027-01-05 Max Mustermann Anderer Kunde Rechnung 302 für 2026-12.pdf").matches()).isTrue();
+        assertThat(pattern.matcher("2026-11-02 Max Mustermann Beispielkunde Rechnung 3020 für 2026-10.pdf").matches()).isFalse();
+        assertThat(pattern.matcher("2026-11-02 Max Mustermann Beispielkunde Rechnung 30 für 2026-10.pdf").matches()).isFalse();
+    }
+
     private static Customer withName(Customer c, String name, String shortName) {
         return new Customer(c.id(), name, shortName, c.address(), c.vatId(), c.email(), c.hourlyRate(),
                 c.paymentTermDays(), c.itemText(), Map.of());

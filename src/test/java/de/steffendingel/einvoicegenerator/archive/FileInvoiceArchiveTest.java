@@ -31,6 +31,11 @@ class FileInvoiceArchiveTest {
     @TempDir
     Path tempDir;
 
+    private static Invoice invoice(String number, LocalDate invoiceDate, YearMonth period) {
+        InvoiceRequest request = new InvoiceRequest(TestData.customer(), BillingPeriod.of(period), BigDecimal.ONE, invoiceDate);
+        return new InvoiceCalculator(TestData.seller()).calculate(request, number);
+    }
+
     private FileInvoiceArchive archive() {
         return new FileInvoiceArchive(tempDir.resolve("rechnungen"), null);
     }
@@ -55,6 +60,30 @@ class FileInvoiceArchiveTest {
                     .isInstanceOf(FileAlreadyExistsException.class)
                     .hasMessageContaining("not overwritten");
             assertThat(tempDir.resolve("rechnungen").resolve(FILE_NAME)).hasBinaryContent(CONTENT);
+        }
+
+        @Test
+        void refusesAnInvoiceNumberThatIsAlreadyUsed() throws IOException {
+            String first = archive().store(TestData.invoice(), CONTENT);
+            // e.g. after the counter file was reset: same number, other date → other file name
+            Invoice sameNumber = invoice("302", LocalDate.of(2026, 12, 1), YearMonth.of(2026, 11));
+
+            assertThatThrownBy(() -> archive().store(sameNumber, CONTENT))
+                    .isInstanceOf(IOException.class)
+                    .hasMessageContaining("invoice number 302 is already used: " + first)
+                    .hasMessageContaining("counter file");
+        }
+
+        @Test
+        void acceptsOtherNumbersEvenIfOneIsAPrefixOfTheOther() throws IOException {
+            archive().store(TestData.invoice(), CONTENT);
+
+            archive().store(invoice("30", LocalDate.of(2026, 12, 1), YearMonth.of(2026, 11)), CONTENT);
+            archive().store(invoice("3020", LocalDate.of(2026, 12, 2), YearMonth.of(2026, 11)), CONTENT);
+
+            try (Stream<Path> files = Files.list(tempDir.resolve("rechnungen"))) {
+                assertThat(files).hasSize(3);
+            }
         }
 
         @Test

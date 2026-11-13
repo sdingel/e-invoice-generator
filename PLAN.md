@@ -253,7 +253,10 @@ Bildseiten einfügen. Das ist immer PDF/A-konform, aber nicht mehr durchsuchbar.
 - Vorhandene Dateien **nie überschreiben**.
 - Warnung bei Doppelabrechnung (gleicher Kunde und Monat existiert schon): Suche nach Dateinamen, die
   zum Template passen (Datum, Nummer und Verkäufer beliebig). Nach einer Änderung des Templates werden
-  ältere Dateien nicht mehr erkannt.
+  ältere Dateien nicht mehr erkannt. Die Warnung blockiert nicht (z. B. Nachberechnung möglich).
+- **Doppelte Rechnungsnummer → Fehler** (14.11.2026): Beim Speichern wird geprüft, ob schon eine Datei mit
+  derselben Nummer existiert (z. B. nach versehentlichem Zurücksetzen der Zählerdatei); falls ja,
+  Abbruch mit Hinweis auf die Zählerdatei. Erkennung ebenfalls über das Template.
 - Erzeugte Rechnungen sind unveränderlich und werden nie aus der aktuellen Konfiguration neu erzeugt.
 
 ## 8. Projektstruktur (Vorschlag)

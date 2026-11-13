@@ -19,7 +19,8 @@ import java.util.stream.Stream;
  * {@link FileNameTemplate}.
  *
  * <p>Files are written to a temporary file first and then renamed, so a crash never leaves a half-written
- * invoice; an existing file is never overwritten.
+ * invoice; an existing file is never overwritten, and an invoice number that is already used by another
+ * file (recognized by the file name template) is refused.
  */
 public final class FileInvoiceArchive implements InvoiceArchive {
 
@@ -49,10 +50,13 @@ public final class FileInvoiceArchive implements InvoiceArchive {
     public Optional<String> findExisting(Customer customer, BillingPeriod period) throws IOException {
         Objects.requireNonNull(customer, "customer must not be null");
         Objects.requireNonNull(period, "period must not be null");
+        return findFile(fileNameTemplate.patternFor(customer, period));
+    }
+
+    private Optional<String> findFile(Pattern pattern) throws IOException {
         if (!Files.isDirectory(directory)) {
             return Optional.empty();
         }
-        Pattern pattern = fileNameTemplate.patternFor(customer, period);
         try (Stream<Path> files = Files.list(directory)) {
             return files.filter(Files::isRegularFile)
                     .filter(file -> pattern.matcher(file.getFileName().toString()).matches())
@@ -70,6 +74,13 @@ public final class FileInvoiceArchive implements InvoiceArchive {
         Path target = resolve(fileNameTemplate.fileName(invoice));
         if (Files.exists(target)) {
             throw new FileAlreadyExistsException(target.toString(), null, "invoice file already exists, not overwritten");
+        }
+        // Invoice numbers must be unique; a reset counter file would otherwise create a second invoice
+        // with the same number under another file name (other date)
+        Optional<String> sameNumber = findFile(fileNameTemplate.patternForNumber(invoice.number()));
+        if (sameNumber.isPresent()) {
+            throw new IOException("invoice number " + invoice.number() + " is already used: " + sameNumber.get()
+                    + ". Is the invoice counter file correct?");
         }
         Path temporary = Files.createTempFile(directory, ".invoice-", ".tmp");
         try {
