@@ -539,7 +539,15 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
 5. Interaktiver Dialog (JLine), Zähler, Ablage, Abschlussvalidierung.
    - ✔ ⑩ `InvoiceArchive` / `FileInvoiceArchive` und ⑪ `InvoiceNumberSource` / `FileInvoiceNumberSource`
      mit Tests (13.11.2026), siehe 3 und 7.
-   - `InvoiceService` (Ablauf ①–⑪) und Dialog.
+   - ✔ `InvoiceService` (Ablauf ①–⑪) mit Tests (14.11.2026): `checkTimesheet` (⑤ + ⑥ probeweise an einer
+     leeren PDF/A-Seite), `findExisting`, `prepare` (Nummer + ①), `previewHtml` (②), `generate` (②–⑪).
+     Geschrieben wird erst in ⑩, nach allen Prüfungen; bei einem Fehler bleibt keine Datei liegen und die
+     Nummer unverbraucht. `generate` prüft zu Beginn, ob die Nummer noch die nächste ist. Fortschritt
+     Schritt für Schritt (Entscheidung A): Der Service meldet `Step`-Werte an einen `ProgressListener`, der
+     Dialog macht daraus deutsche Texte. Fehler als `InvoiceGenerationException` mit Schritt und Problemen.
+     Scheitert ⑪ nach erfolgreichem ⑩, nennt die Meldung die gespeicherte Datei und bittet, den Zähler von
+     Hand zu setzen (die Prüfung auf doppelte Nummern in ⑩ fängt einen vergessenen Zähler später ab).
+   - Dialog (JLine) und `App` (Konfiguration laden, Umsetzungen erzeugen).
 
 ## 10. Offene Punkte / Risiken
 
