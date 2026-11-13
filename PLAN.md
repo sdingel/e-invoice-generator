@@ -511,6 +511,16 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      Abhängigkeit in der Version, die Mustang mitbringt. Erkannt werden u. a. nicht eingebettete
      Schriften und CMYK-Farben im Nachweis. Beide echten Nachweise (Excel, PDFCreator) lokal geprüft:
      angehängt jeweils gültiges PDF/A-3b.
+   - ✔ ⑦ `EInvoiceXmlGenerator` / `ZugferdXmlGenerator`, ⑧ `EInvoiceXmlEmbedder` / `ZugferdXmlEmbedder`,
+     ⑨ `EInvoiceValidator` / `MustangValidator` mit Tests (13.11.2026), inkl. BG-24-Einbettung der Nachweise.
+     Entscheidungen: **Lieferdatum (BT-72) = letzter Tag des Leistungszeitraums** (nicht Pflicht, aber ohne
+     schreibt Mustang ein leeres Element → Warnung PEPPOL-EN16931-R008; im PDF bleibt es beim
+     Leistungszeitraum). **Keine Käufer-/Bestellreferenz** (BT-10/BT-13), bis ein Kunde danach fragt.
+     **Warnungen des Validators gelten als Fehler**, Hinweise (z. B. XRechnung-Regeln) werden ignoriert.
+     ⑦ vergleicht Mustangs Summen mit denen der `Invoice` (PDF und XML können sich nicht widersprechen).
+     **Datum:** Mustang legt seinen Datumsformatierer pro Thread mit der damaligen Zeitzone an; Datumswerte
+     werden deshalb als 12 Uhr mittags übergeben (Test mit fünf Zeitzonen und Wechsel zur Laufzeit).
+     Lokal mit echtem Excel-Nachweis und echtem Logo geprüft: gültige E-Rechnung ohne Warnungen (514 KB).
    - Später im Ablauf: openhtmltopdf gibt viele INFO-Meldungen aus; im Dialog ruhigstellen.
 5. Interaktiver Dialog (JLine), Zähler, Ablage, Abschlussvalidierung.
 
