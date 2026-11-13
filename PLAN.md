@@ -503,6 +503,15 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      die Logo-Höhe fest, die Breite folgt dem Seitenverhältnis. Relative Bildpfade in eigenen Templates
      gelten relativ zum Template-Verzeichnis.
 4. Stundennachweis: probeweise anhängen und mit veraPDF prüfen, Seiten anhängen, BG-24-Einbettung im XML.
+   - ✔ ⑤ `PdfPageAppender` / `PdfBoxPageAppender` und ⑥ `PdfAValidator` / `VeraPdfValidator` mit Tests
+     (13.11.2026). Seiten werden einzeln importiert (Größe und Ausrichtung bleiben, z. B. Querformat);
+     Metadaten und Farbprofil der Rechnung gelten für das ganze Dokument. Mehrere Nachweise pro Rechnung
+     sind möglich. Passwortgeschützte oder beschädigte Nachweise → verständlicher Fehler.
+     veraPDF prüft fest gegen PDF/A-3b (nicht gegen die Stufe, die eine Datei angibt); jetzt direkte
+     Abhängigkeit in der Version, die Mustang mitbringt. Erkannt werden u. a. nicht eingebettete
+     Schriften und CMYK-Farben im Nachweis. Beide echten Nachweise (Excel, PDFCreator) lokal geprüft:
+     angehängt jeweils gültiges PDF/A-3b.
+   - Später im Ablauf: openhtmltopdf gibt viele INFO-Meldungen aus; im Dialog ruhigstellen.
 5. Interaktiver Dialog (JLine), Zähler, Ablage, Abschlussvalidierung.
 
 ## 10. Offene Punkte / Risiken
