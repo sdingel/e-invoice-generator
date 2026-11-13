@@ -27,7 +27,7 @@ public final class TestData {
     }
 
     public static Customer customer(BigDecimal hourlyRate, int paymentTermDays) {
-        return new Customer("beispiel", "Beispiel GmbH",
+        return new Customer("beispiel", "Beispiel GmbH", "Beispielkunde",
                 new Address("Beispielweg 2", "54321", "Beispielstadt", "DE"),
                 null, "buchhaltung@example.com", hourlyRate, paymentTermDays,
                 "Beratungs- und Entwicklungsleistungen", Map.of("vertragsdatum", "15.01.2026"));
@@ -47,7 +47,7 @@ public final class TestData {
     /** Copy of the example customer with other free fields. */
     public static Customer customerWithFields(Map<String, String> fields) {
         Customer c = customer();
-        return new Customer(c.id(), c.name(), c.address(), c.vatId(), c.email(), c.hourlyRate(),
+        return new Customer(c.id(), c.name(), c.shortName(), c.address(), c.vatId(), c.email(), c.hourlyRate(),
                 c.paymentTermDays(), c.itemText(), fields);
     }
 

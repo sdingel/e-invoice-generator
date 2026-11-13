@@ -114,9 +114,11 @@ Sie landen nur im PDF, nicht im XML.
 
 ### `invoice-counter`
 
-Enthält nur die **nächste** Rechnungsnummer, z. B. `302`.
+Enthält nur die **nächste** Rechnungsnummer, z. B. `302`. Liegt im Konfigurationsordner neben
+`settings.yaml` (festgelegt am 13.11.2026).
 - Erst erhöhen, wenn die Rechnung erfolgreich geschrieben und validiert ist.
 - Atomar schreiben (temporäre Datei, dann umbenennen).
+- Fehlt die Datei, bricht das Programm mit einem Hinweis ab, statt bei 1 zu beginnen.
 
 ## 4. Bedienung: interaktiver Dialog
 
@@ -239,10 +241,19 @@ Bildseiten einfügen. Das ist immer PDF/A-konform, aber nicht mehr durchsuchbar.
 
 ## 7. Ablage
 
-- Fertige Rechnungen in `outputDir` (nicht mit Git versioniert).
-- Dateiname: `<Nummer>_<kundenId>_<JJJJ-MM>.pdf`, z. B. `302_acme_2026-10.pdf`.
+- Fertige Rechnungen in `outputDir` (nicht mit Git versioniert), **ohne Unterordner**.
+- Dateiname aus einem **Template**, einstellbar in `settings.yaml` (`fileName:`), Standard (13.11.2026):
+  `{invoiceDate} {sellerName} {customerShortName} Rechnung {number} für {period}.pdf`,
+  z. B. „2026-11-09 Max Mustermann Beispielkunde Rechnung 304 für 2026-10.pdf“.
+  Platzhalter: `{invoiceDate}` (JJJJ-MM-TT), `{period}` (JJJJ-MM, Beginn des Leistungszeitraums),
+  `{number}` (Pflicht), `{sellerName}`, `{customerShortName}` (neues optionales Feld `shortName` in
+  `customers.yaml`, Standard: `name`), `{customerName}`, `{customerId}`. Unbekannte Platzhalter → Fehler
+  beim Start; in Dateinamen unzulässige Zeichen werden durch „-“ ersetzt. Umlaute im Dateinamen brauchen
+  eine UTF-8-Locale, sonst gibt es eine verständliche Fehlermeldung.
 - Vorhandene Dateien **nie überschreiben**.
-- Warnung bei Doppelabrechnung (gleicher Kunde und Monat existiert schon).
+- Warnung bei Doppelabrechnung (gleicher Kunde und Monat existiert schon): Suche nach Dateinamen, die
+  zum Template passen (Datum, Nummer und Verkäufer beliebig). Nach einer Änderung des Templates werden
+  ältere Dateien nicht mehr erkannt.
 - Erzeugte Rechnungen sind unveränderlich und werden nie aus der aktuellen Konfiguration neu erzeugt.
 
 ## 8. Projektstruktur (Vorschlag)
@@ -353,7 +364,7 @@ record Address(String street, String zip, String city, String country) {}
 record Seller(String name, Address address, String vatId, String taxNumber,
               String iban, String bic, String email) {}       // nur XML-relevante Daten, siehe 3
 
-record Customer(String id, String name, Address address, String vatId, String email,
+record Customer(String id, String name, String shortName, Address address, String vatId, String email,
                 BigDecimal hourlyRate, int paymentTermDays, String itemText,
                 Map<String, String> fields) {}                 // fields: freie Platzhalter, siehe 3
 
@@ -431,7 +442,7 @@ interface EInvoiceValidator {
 // ⑩ archive
 interface InvoiceArchive {
     /** Existing invoice for the same customer and period (warning about double billing). */
-    Optional<String> findExisting(String customerId, BillingPeriod period) throws IOException;
+    Optional<String> findExisting(Customer customer, BillingPeriod period) throws IOException;
 
     /** Stores the invoice and returns where it was stored; never overwrites an existing file. */
     String store(Invoice invoice, byte[] eInvoice) throws IOException;
@@ -523,6 +534,9 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      Lokal mit echtem Excel-Nachweis und echtem Logo geprüft: gültige E-Rechnung ohne Warnungen (514 KB).
    - Später im Ablauf: openhtmltopdf gibt viele INFO-Meldungen aus; im Dialog ruhigstellen.
 5. Interaktiver Dialog (JLine), Zähler, Ablage, Abschlussvalidierung.
+   - ✔ ⑩ `InvoiceArchive` / `FileInvoiceArchive` und ⑪ `InvoiceNumberSource` / `FileInvoiceNumberSource`
+     mit Tests (13.11.2026), siehe 3 und 7.
+   - `InvoiceService` (Ablauf ①–⑪) und Dialog.
 
 ## 10. Offene Punkte / Risiken
 

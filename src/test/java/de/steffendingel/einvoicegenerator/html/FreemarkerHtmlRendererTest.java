@@ -134,7 +134,7 @@ class FreemarkerHtmlRendererTest {
         @Test
         void escapesSpecialCharactersAndStaysWellFormed() throws Exception {
             Customer example = TestData.customer();
-            Customer customer = new Customer(example.id(), "Müller & Söhne <GmbH>",
+            Customer customer = new Customer(example.id(), "Müller & Söhne <GmbH>", null,
                     new Address("Weg \"A\" 1", "54321", "Ort", "DE"), null, null, example.hourlyRate(),
                     example.paymentTermDays(), "Beratung & Entwicklung", Map.of("ansprechpartner", "z. Hd. <Chef>"));
 

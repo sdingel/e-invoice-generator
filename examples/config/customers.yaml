@@ -1,8 +1,9 @@
 # Example customers (fictitious data). Copy to your configuration directory and adjust.
 
 customers:
-  - id: beispiel                      # short identifier, used in file names
+  - id: beispiel                      # short identifier, e.g. for selecting the customer
     name: Beispiel GmbH
+    shortName: Beispielkunde          # optional, used in file names (default: name)
     address:
       street: Beispielweg 2
       zip: "54321"                    # always quoted

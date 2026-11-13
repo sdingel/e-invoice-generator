@@ -86,7 +86,7 @@ class RecordValidationTest {
 
         private Customer customerWithFields(Map<String, String> fields) {
             Customer c = TestData.customer();
-            return new Customer(c.id(), c.name(), c.address(), c.vatId(), c.email(), c.hourlyRate(),
+            return new Customer(c.id(), c.name(), c.shortName(), c.address(), c.vatId(), c.email(), c.hourlyRate(),
                     c.paymentTermDays(), c.itemText(), fields);
         }
     }
