@@ -20,6 +20,10 @@
     logo         file URI of the logo (missing if no logo is configured)
     format       money(), decimal(), percent(), date(), shortDate(), iban()
 
+  Fonts: only "Carlito" is available (also under the names "Calibri" and "sans-serif"). Text in any
+  other font family is left out of the PDF (the invoice is then rejected as incomplete).
+  Logo: PDF (vector) or PNG/JPEG; SVG is not supported.
+
   Missing optional values: ${x!} prints nothing, <#if x??>...</#if> tests for presence.
   Text is escaped automatically (.ftlh), e.g. "&" becomes "&amp;".
 -->
@@ -46,8 +50,9 @@
   /* Letterhead top right: logo + sender */
   .letterhead { position: absolute; top: 0.45cm; right: 2cm; }
   .letterhead td { vertical-align: top; padding: 0; }
-  .letterhead .logo { width: 1.9cm; height: 1.9cm; padding-right: 0.25cm; }
-  .letterhead .logo img { width: 1.9cm; height: 1.9cm; }
+  .letterhead .logo { padding-right: 0.25cm; }
+  /* Only the height is fixed; the width follows the aspect ratio of the logo */
+  .letterhead .logo img { height: 1.9cm; }
   .letterhead .sender { font-size: 10.5pt; line-height: 1.3; }
 
   /* Address field */
