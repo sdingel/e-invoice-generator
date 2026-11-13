@@ -164,7 +164,7 @@ class FreemarkerHtmlRendererTest {
 
         @Test
         void isReferencedAsFileUri() throws IOException {
-            Path logo = Files.writeString(tempDir.resolve("logo.svg"), "<svg/>");
+            Path logo = Files.writeString(tempDir.resolve("logo.pdf"), "%PDF-1.7");
 
             String html = new FreemarkerHtmlRenderer(null, logo).renderHtml(TestData.invoice(), ATTACHMENTS);
 
@@ -173,9 +173,20 @@ class FreemarkerHtmlRendererTest {
 
         @Test
         void mustExist() {
-            assertThatThrownBy(() -> new FreemarkerHtmlRenderer(null, tempDir.resolve("missing.svg")))
+            assertThatThrownBy(() -> new FreemarkerHtmlRenderer(null, tempDir.resolve("missing.pdf")))
                     .isInstanceOf(IOException.class)
                     .hasMessageContaining("logo not found");
+        }
+
+        @Test
+        void mustBePdfPngOrJpeg() throws IOException {
+            Path svg = Files.writeString(tempDir.resolve("logo.svg"), "<svg/>");
+            Path png = Files.writeString(tempDir.resolve("logo.PNG"), "png");
+
+            assertThatThrownBy(() -> new FreemarkerHtmlRenderer(null, svg))
+                    .isInstanceOf(IOException.class)
+                    .hasMessageContaining("unsupported logo format");
+            new FreemarkerHtmlRenderer(null, png); // upper case extension is fine
         }
     }
 

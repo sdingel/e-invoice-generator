@@ -1,6 +1,6 @@
 # e-invoice-generator – Planung
 
-Stand: 30.10.2026 · Status: PoC abgeschlossen, Interfaces festgelegt, Umsetzung noch nicht begonnen
+Stand: 13.11.2026 · Status: PoC abgeschlossen, Interfaces festgelegt, Umsetzung noch nicht begonnen
 
 Ein Kommandozeilen-Tool für Solo-Selbständige: erzeugt monatliche Rechnungen als hybride
 ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
@@ -491,7 +491,17 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      E-Mail, USt-IdNr./Steuernummer, IBAN, BIC, Kunden- und Rechnungsdaten), kommt aus Variablen; fest
      im Template stehen nur reine Anzeige-Angaben (Tätigkeitsbezeichnung, Telefon, Mobil, Website,
      Bankname), die im XML nicht vorkommen. Der PoC nutzt eine eigene Template-Kopie (`resources/poc/`).
-   - ③ PDF/A erzeugen und ④ Text zurücklesen.
+   - ✔ ③ `HtmlToPdfConverter` / `OpenHtmlToPdfConverter` und ④ `PdfTextVerifier` / `PdfBoxTextVerifier`
+     mit Tests (13.11.2026). PDF/A-3b mit Carlito und sRGB-Profil aus dem JDK; fehlende Schriftdateien
+     → Fehler schon beim Erzeugen des Konverters.
+     **Schriften:** openhtmltopdf lässt Text in nicht registrierten Schriften im PDF/A-Modus still weg,
+     auch bei `sans-serif` oder ganz ohne `font-family` (getestet). Entscheidung: Carlito wird zusätzlich
+     als „Calibri“ und als generisches `sans-serif` registriert (intern heißt das bei openhtmltopdf
+     „SansSerif“); andere Schriften gibt es nicht, ④ meldet dann fehlenden Text.
+     **Logo:** PDF (bleibt Vektorgrafik, keine Zusatzbibliothek) oder PNG/JPEG; kein SVG (bräuchte Batik).
+     EPS vorher in PDF umwandeln, z. B. `ps2pdf -dEPSCrop`, Farben in RGB statt CMYK. Im Template ist nur
+     die Logo-Höhe fest, die Breite folgt dem Seitenverhältnis. Relative Bildpfade in eigenen Templates
+     gelten relativ zum Template-Verzeichnis.
 4. Stundennachweis: probeweise anhängen und mit veraPDF prüfen, Seiten anhängen, BG-24-Einbettung im XML.
 5. Interaktiver Dialog (JLine), Zähler, Ablage, Abschlussvalidierung.
 
@@ -503,12 +513,13 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
       noch PDFBox 2, daher den Fork verwenden. Absicherung siehe Abschnitt 2.
 - [x] **veraPDF-Artefakte:** kommen transitiv über `org.mustangproject:validator` (2.26.0) mit
       (`org.verapdf:validation-model-jakarta`), nicht über `library`. Kein eigenes veraPDF-Artefakt nötig.
-- [ ] **Aktuelle Versionen** aller Abhängigkeiten beim Projektstart festlegen.
+- [x] **Aktuelle Versionen** aller Abhängigkeiten festgelegt (Properties in der `pom.xml`).
 - [ ] **Ablageort der Konfiguration** festlegen (Vorschlag: `~/rechnungen/config/`).
 - [x] **Package-Name:** `de.steffendingel.einvoicegenerator` (Schema `de.steffendingel.<projektname>`, eigene Domain `steffendingel.de`).
 - [x] **Schrift:** Carlito (maßgleich zu Calibri, OFL), siehe 5.
 - [x] **Eigenes Layout** aus Word in HTML/CSS nachgebaut (im PoC).
-- [ ] **Logo** bereitstellen (bevorzugt SVG); im Template derzeit ein Platzhalter.
+- [x] **Logo:** liegt als PDF (aus EPS umgewandelt) beim Nutzer vor, geprüft am 13.11.2026: Vektor, RGB,
+      PDF/A-3b-konform. Nicht im Repository.
 - [ ] **Mailversand** *(später)*: Jakarta Mail/Angus Mail via SMTP, an Kunden-`email`,
       BCC an das DMS; SMTP-Zugangsdaten **nicht** in der YAML, sondern in Umgebungsvariablen
       oder einer separaten, geschützten Datei; zweistufig (erst erzeugen und ansehen, dann eigener

@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * Step ② with FreeMarker: fills the built-in template {@code templates/invoice.ftlh} or a template file
@@ -31,6 +32,9 @@ public final class FreemarkerHtmlRenderer implements InvoiceHtmlRenderer {
 
     /** Records are accessible as {@code ${customer.name}} only from this version on. */
     private static final freemarker.template.Version VERSION = Configuration.VERSION_2_3_35;
+
+    /** Image formats the PDF conversion (step ③) can embed; SVG would need an extra library. */
+    private static final Pattern SUPPORTED_LOGO = Pattern.compile("(?i).+\\.(pdf|png|jpe?g)");
 
     private static final String BUILT_IN_DIRECTORY = "/templates";
     private static final String BUILT_IN_TEMPLATE = "invoice.ftlh";
@@ -69,6 +73,9 @@ public final class FreemarkerHtmlRenderer implements InvoiceHtmlRenderer {
         }
         if (logo != null && !Files.isRegularFile(logo)) {
             throw new IOException("logo not found: " + logo);
+        }
+        if (logo != null && !SUPPORTED_LOGO.matcher(logo.getFileName().toString()).matches()) {
+            throw new IOException("unsupported logo format (use PDF, PNG or JPEG): " + logo);
         }
         this.logo = logo;
     }

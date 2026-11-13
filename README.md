@@ -129,8 +129,16 @@ template) and `customers.yaml` (customers with hourly rate, payment term, line i
 placeholders for the template). Commented examples with fictitious data are in
 [`examples/config/`](examples/config/).
 
-## Fonts
+## Fonts and logo
 
 The template uses [Carlito](https://github.com/googlefonts/carlito), which is metric-compatible with
 Calibri and licensed under the SIL Open Font License (see
 [`src/main/resources/fonts/OFL-Carlito.txt`](src/main/resources/fonts/OFL-Carlito.txt)).
+
+Carlito is the only font available for templates; it is also registered under the names `Calibri` and
+`sans-serif`. Text in any other font family would be left out of the PDF, so step ④ rejects the invoice
+in that case.
+
+A logo can be a PDF (stays a vector graphic), PNG or JPEG; SVG is not supported. An EPS logo can be
+converted to PDF first, e.g. with Ghostscript: `ps2pdf -dEPSCrop logo.eps logo.pdf` (use RGB colors,
+not CMYK).
