@@ -1,6 +1,6 @@
 # e-invoice-generator – Planung
 
-Stand: 13.11.2026 · Status: PoC abgeschlossen, Interfaces festgelegt, Umsetzung noch nicht begonnen
+Stand: 14.11.2026 · Status: Schritte ①–⑪, Dialog und Konfiguration umgesetzt; per Maven nutzbar
 
 Ein Kommandozeilen-Tool für Solo-Selbständige: erzeugt monatliche Rechnungen als hybride
 ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
@@ -535,7 +535,6 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      **Datum:** Mustang legt seinen Datumsformatierer pro Thread mit der damaligen Zeitzone an; Datumswerte
      werden deshalb als 12 Uhr mittags übergeben (Test mit fünf Zeitzonen und Wechsel zur Laufzeit).
      Lokal mit echtem Excel-Nachweis und echtem Logo geprüft: gültige E-Rechnung ohne Warnungen (514 KB).
-   - Später im Ablauf: openhtmltopdf gibt viele INFO-Meldungen aus; im Dialog ruhigstellen.
 5. Interaktiver Dialog (JLine), Zähler, Ablage, Abschlussvalidierung.
    - ✔ ⑩ `InvoiceArchive` / `FileInvoiceArchive` und ⑪ `InvoiceNumberSource` / `FileInvoiceNumberSource`
      mit Tests (13.11.2026), siehe 3 und 7.
@@ -547,7 +546,16 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      Dialog macht daraus deutsche Texte. Fehler als `InvoiceGenerationException` mit Schritt und Problemen.
      Scheitert ⑪ nach erfolgreichem ⑩, nennt die Meldung die gespeicherte Datei und bittet, den Zähler von
      Hand zu setzen (die Prüfung auf doppelte Nummern in ⑩ fängt einen vergessenen Zähler später ab).
-   - Dialog (JLine) und `App` (Konfiguration laden, Umsetzungen erzeugen).
+   - ✔ Dialog (`cli.InteractiveDialog`, JLine) und `App` mit Tests (14.11.2026). Entscheidungen:
+     Konfiguration standardmäßig in `~/rechnungen/config/`, anderer Ordner per `--config <Ordner>`;
+     **genau ein Tätigkeitsnachweis** pro Rechnung (Pflicht), Bezeichnung „**Tätigkeitsnachweis MM/JJJJ**“
+     (im XML mit dem ursprünglichen Dateinamen); Leistungszeitraum als Monat (`10/2026`), Vorschlag
+     Vormonat des Rechnungsdatums; Rechnungsdatum Vorschlag heute. Der Nachweis wird direkt nach der
+     Eingabe geprüft, bei Doppelabrechnung kommt eine Warnung mit Rückfrage (Standard: abbrechen).
+     Fortschritt ①–⑪ mit deutschen Texten. Exit-Codes: 0 erzeugt, 1 Fehler, 2 abgebrochen.
+     Log-Ausgaben der Bibliotheken sind abgeschaltet (`slf4j-nop`, `XRLog`, java.util.logging).
+     Die Zählerdatei wird beim Start geprüft, nicht erst nach allen Fragen.
+   - Ausliefern als ausführbares JAR (nächster Schritt).
 
 ## 10. Offene Punkte / Risiken
 
