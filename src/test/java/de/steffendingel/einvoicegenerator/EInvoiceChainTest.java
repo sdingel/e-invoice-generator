@@ -91,6 +91,22 @@ class EInvoiceChainTest {
         }
 
         @Test
+        void namesTheToolWithVersionAndProjectUrl() throws IOException {
+            String tool = "E-Invoice Generator " + AppInfo.VERSION;
+            String toolWithUrl = tool + " (https://github.com/sdingel/e-invoice-generator)";
+            String metadata;
+            try (PDDocument document = Loader.loadPDF(eInvoice)) {
+                assertThat(document.getDocumentInformation().getProducer())
+                        .isEqualTo(tool + " (via mustangproject.org " + AppInfo.MUSTANG_VERSION + ")");
+                assertThat(document.getDocumentInformation().getCreator()).isEqualTo(toolWithUrl);
+                metadata = new String(document.getDocumentCatalog().getMetadata().toByteArray(), StandardCharsets.UTF_8);
+            }
+            assertThat(metadata)
+                    .contains("<pdf:Producer>" + tool + "</pdf:Producer>")
+                    .contains("<xmp:CreatorTool>" + toolWithUrl + "</xmp:CreatorTool>");
+        }
+
+        @Test
         void declaresPdfA3bAndTheZugferdProfile() throws IOException {
             String metadata;
             try (PDDocument document = Loader.loadPDF(eInvoice)) {

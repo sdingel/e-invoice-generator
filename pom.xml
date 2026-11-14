@@ -8,6 +8,7 @@
     <artifactId>e-invoice-generator</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>E-Invoice Generator</name>
+    <url>https://github.com/sdingel/e-invoice-generator</url>
 
     <properties>
         <java.version>17</java.version>
@@ -128,6 +129,17 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <!-- Only this directory is filtered (name, version and URL from this POM); filtering would
+                 damage the fonts and replace the ${...} expressions in the FreeMarker templates -->
+            <resource>
+                <directory>src/main/resources-filtered</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <!-- target/e-invoice-generator.jar -->
         <finalName>${project.artifactId}</finalName>
         <plugins>
