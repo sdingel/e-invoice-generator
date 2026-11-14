@@ -31,8 +31,9 @@ decisions; it is being moved into issues and the README and will then be deleted
 - Issues are implemented one at a time, and only when the user explicitly asks for it.
 - Before starting to implement an issue, think it through and ask all foreseeable questions first, so
   that as few questions as possible come up while coding.
-- One branch and one pull request per issue. Every change goes through a pull request; `main` is
-  protected, never push to `main` (see `.claude/settings.json`).
+- One branch and one pull request per issue. The branch name starts with the issue number, e.g.
+  `12-payment-note`. Every change goes through a pull request; `main` is protected, never push to
+  `main` (see `.claude/settings.json`).
 - Only the user merges pull requests; never merge yourself.
 - Pull requests are merged with a merge commit, not squashed, so the full history is kept. The history
   is meant to reflect the development process as it actually happened; it does not have to be clean,
@@ -45,8 +46,8 @@ decisions; it is being moved into issues and the README and will then be deleted
   start the subject with `#`, because Git treats such lines as comments when a message is edited in an
   editor.
 - Commits without an issue are allowed only in special cases the user has explicitly approved. They also
-  go through a branch and a pull request, and their subject names the case instead of an issue number,
-  e.g. `[CLAUDE.md] Short description`. Approved special cases:
+  go through a branch and a pull request; there is no special rule for their subject line, just a
+  meaningful description. Approved special cases:
   - Changes to this file (`CLAUDE.md`).
 - When an issue is completely implemented and all open questions to the user are resolved, create the
   pull request without being asked.
