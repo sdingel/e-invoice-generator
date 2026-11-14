@@ -10,7 +10,7 @@
     <name>E-Invoice Generator</name>
 
     <properties>
-        <java.version>21</java.version>
+        <java.version>17</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -101,6 +101,8 @@
             <groupId>org.jline</groupId>
             <artifactId>jline</artifactId>
             <version>${jline.version}</version>
+            <!-- Variant without the terminal classes for Java 22 (FFM), so that every class runs on Java 17 -->
+            <classifier>jdk11</classifier>
         </dependency>
         <!-- Mustang logs via SLF4J; without a provider it prints warnings at every start. The tool reports
              problems itself, so the libraries' log output is not needed. -->

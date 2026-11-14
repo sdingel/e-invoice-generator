@@ -30,7 +30,7 @@ ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
 
 | Bereich | Wahl |
 |---|---|
-| Sprache | **Java 21** (LTS; in der Cloud-Umgebung ist nur JDK 21 verfügbar) |
+| Sprache | **Java 17** (LTS; Mindestversion, damit das Tool auch auf älteren JDKs läuft; CI baut mit JDK 17) |
 | Build | **Maven**, ausführbares Fat-JAR via `maven-shade-plugin` |
 | ZUGFeRD | **Mustangproject** (`org.mustangproject:library`), Validierung mit Mustangs Validator |
 | PDF-Layout | **FreeMarker** (`org.freemarker:freemarker`, neueste Version, derzeit 2.3.35; XHTML-Template) + **openhtmltopdf** (Fork `io.github.openhtmltopdf`) → PDF/A |
@@ -38,14 +38,14 @@ ZUGFeRD-Rechnung (PDF/A-3 mit eingebettetem XML) inklusive Stundennachweis.
 | PDF-Manipulation | **Apache PDFBox** (Seiten des Stundennachweises anhängen) |
 | PDF/A-Prüfung | **veraPDF** als Java-Bibliothek (kommt über `org.mustangproject:validator` mit) |
 | Konfiguration | **Jackson** + `jackson-dataformat-yaml`, Java-Records (gegenüber SnakeYAML direkt bevorzugt: Records ohne eigenen Abbildungscode, `FAIL_ON_UNKNOWN_PROPERTIES` erkennt Tippfehler, Fehlermeldungen mit Pfad) |
-| Konsole | **JLine 3** (Zeilenbearbeitung, Tab-Vervollständigung für Kunden und Dateipfade) |
+| Konsole | **JLine 4**, Variante `jdk11` ohne die FFM-Klassen für Java 22 (Zeilenbearbeitung, Tab-Vervollständigung für Kunden und Dateipfade) |
 | Tests | JUnit 5, AssertJ |
 | Später: Mail | Jakarta Mail (Eclipse Angus Mail) |
 
 **PDFBox-Version:** Mustang 2.26.0 und openhtmltopdf 1.1.100 nutzen beide PDFBox **3.0.8**
 (Stand 26.10.2026). PDFBox ist eine **direkte Abhängigkeit** (wir nutzen die API selbst) und legt
 damit die Version auch für Mustang und openhtmltopdf fest. Der `maven-enforcer-plugin` prüft beim Build:
-- `requireMavenVersion` (≥ 3.9) und `requireJavaVersion` (≥ 21)
+- `requireMavenVersion` (≥ 3.9) und `requireJavaVersion` (≥ 17)
 - `requireUpperBoundDeps`: keine Bibliothek in einer älteren Version als irgendwo verlangt.
   Hat `commons-logging` 1.3.0 (über Mustang → FOP) statt der von PDFBox verlangten 1.4.0 gefunden;
   das ist der einzige Eintrag im `dependencyManagement`.
@@ -603,7 +603,9 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
       oder einer separaten, geschützten Datei; zweistufig (erst erzeugen und ansehen, dann eigener
       Sende-Befehl → dann ggf. picocli für Unterbefehle).
 - [ ] **Plan B Stundennachweis** (als Bild rendern) nur bei Bedarf.
-- [x] **Java-Version:** Java 21 statt 25 (in der Cloud-Umgebung ist nur JDK 21 verfügbar).
+- [x] **Java-Version:** Java 17 als Mindestversion (14.11.2026; vorher 21). Eigener Code und alle
+      Bibliotheken laufen auf 17 (JUnit 6 braucht 17); JLine in der Variante `jdk11`. Geprüft mit
+      OpenJDK 17: kompletter Dialog bis zur gültigen Rechnung.
 
 ## 11. Ergebnisse des PoC (27.10.2026)
 
