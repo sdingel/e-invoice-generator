@@ -555,15 +555,19 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      Fortschritt ①–⑪ mit deutschen Texten. Exit-Codes: 0 erzeugt, 1 Fehler, 2 abgebrochen.
      Log-Ausgaben der Bibliotheken sind abgeschaltet (`slf4j-nop`, `XRLog`, java.util.logging).
      Die Zählerdatei wird beim Start geprüft, nicht erst nach allen Fragen.
-   - **Nächster Schritt: Ausliefern als ausführbares JAR** (Entscheidungen vom 14.11.2026, noch nicht umgesetzt):
-     - Ein JAR mit allen Bibliotheken (`maven-shade-plugin`), `target/e-invoice-generator.jar`.
-       Signaturdateien der Bibliotheken entfernen, `META-INF/services` zusammenführen (sonst findet z. B.
-       JLine sein Terminal nicht). Ein Test startet das fertige JAR (`--help` und ein kompletter Durchlauf).
-     - **Startskripte für Linux und Windows** (`e-invoice-generator` und `e-invoice-generator.cmd`), die
-       `java -jar …` aufrufen. Das Windows-Skript testet der Nutzer selbst (in der Cloud-Umgebung gibt es
-       kein Windows).
-     - **JAR auf GitHub bereitstellen:** der CI-Build hängt das JAR als Download an (Artefakt); Releases mit
-       Versionsnummer bei Bedarf später.
+   - ✔ **Ausliefern als ausführbares JAR** (14.11.2026):
+     - `target/e-invoice-generator.jar` (ca. 59 MB) mit allen Bibliotheken (`maven-shade-plugin`),
+       Signaturdateien der Bibliotheken entfernt, `META-INF/services` zusammengeführt (FOP, ph-commons und
+       Jackson haben gleichnamige Service-Dateien; unser Ablauf nutzt sie derzeit nicht, ohne Zusammenführen
+       gingen sie aber still verloren), `Multi-Release: true` im Manifest.
+     - Startskripte `e-invoice-generator` (Linux/WSL/macOS) und `e-invoice-generator.cmd` (Windows) in
+       `src/dist/`, beim Bauen neben das JAR nach `target/` kopiert. Das Windows-Skript setzt die Codepage auf
+       UTF-8 (`chcp 65001`) und wird vom Nutzer auf Windows getestet.
+     - `ExecutableJarIT` (Failsafe, nach dem Bauen) startet das fertige JAR: `--help`, das Linux-Skript und
+       ein kompletter Durchlauf bis zur gültigen E-Rechnung.
+     - Der CI-Build stellt JAR und Startskripte als Download bereit (Artefakt „e-invoice-generator“).
+   - **Nächster Schritt: Versionsnummer** (Entscheidungen vom 14.11.2026, Version bleibt vorerst
+     `0.1.0-SNAPSHOT`, bis der Nutzer eine feste Version freigibt):
      - **Versionsnummer:** `--version` zeigt sie an, die Hilfe ebenfalls. Sie kommt in die PDF-Metadaten jeder
        Rechnung (Producer/Creator, z. B. „E-Invoice Generator 0.1.0“), dazu nach Möglichkeit der Link
        https://github.com/sdingel/e-invoice-generator (z. B. im Creator-Tool-Eintrag der XMP-Metadaten).

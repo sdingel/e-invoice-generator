@@ -108,21 +108,44 @@ Notes:
   veraPDF still reports the empty page as compliant.
 - ⑤ must run before ⑧: appending pages after embedding the XML would break the PDF/A metadata.
 
-## Build and run
+## Installation
 
-Requirements: Java 21, Maven 3.9.
+Requirements: Java 21 or newer.
+
+1. Download the latest build: on the [Actions page](https://github.com/sdingel/e-invoice-generator/actions/workflows/build.yml),
+   open a successful run of `main` and download the artifact **e-invoice-generator** (a ZIP file), or build it
+   yourself (see below).
+2. Unpack it into a directory of your choice. It contains `e-invoice-generator.jar` and the start scripts
+   `e-invoice-generator` (Linux, WSL, macOS) and `e-invoice-generator.cmd` (Windows). The JAR and the scripts
+   must stay in the same directory.
+3. On Linux/WSL/macOS make the script executable: `chmod +x e-invoice-generator` (ZIP files do not keep this
+   permission). Optionally put the directory on your `PATH`.
+4. Create the configuration in `~/rechnungen/config` (see [Configuration](#configuration)).
 
 ```sh
-mvn verify    # build and run the tests
-
-# start the dialog (configuration in ~/rechnungen/config, or --config <directory>)
-mvn -q compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.App
-mvn -q compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.App -Dexec.args="--config ~/my-config"
+e-invoice-generator                       # Linux, WSL, macOS
+e-invoice-generator.cmd                   # Windows
+java -jar e-invoice-generator.jar         # without the scripts
+e-invoice-generator --config ~/my-config  # other configuration directory
 ```
 
 The dialog asks for customer, invoice date, billing period (month), hours and the timesheet (Tab completes
 file names), shows a summary and creates the e-invoice after confirmation, reporting each step ① to ⑪.
 Exit code: 0 invoice created, 1 error, 2 aborted.
+
+## Build
+
+Requirements: Java 21, Maven 3.9.
+
+```sh
+mvn verify    # build, run the tests and create target/e-invoice-generator.jar with the start scripts
+
+# run without building the JAR
+mvn -q compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.App
+mvn -q compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.App -Dexec.args="--config ~/my-config"
+```
+
+Tests named `*IT` run against the finished JAR after packaging (`mvn verify`, not `mvn test`).
 
 Proof of concept (throwaway), output in `target/poc/`:
 

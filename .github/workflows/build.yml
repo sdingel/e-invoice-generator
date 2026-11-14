@@ -31,3 +31,14 @@ jobs:
 
       - name: Build and test
         run: mvn --batch-mode --no-transfer-progress verify
+
+      # Download on the page of the workflow run: the JAR with the start scripts for Linux and Windows
+      - name: Provide the JAR as download
+        uses: actions/upload-artifact@v7
+        with:
+          name: e-invoice-generator
+          path: |
+            target/e-invoice-generator.jar
+            target/e-invoice-generator
+            target/e-invoice-generator.cmd
+          if-no-files-found: error

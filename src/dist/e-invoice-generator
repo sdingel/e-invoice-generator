@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Starts the E-Invoice Generator. The JAR must be in the same directory as this script.
+# Uses $JAVA_HOME/bin/java if JAVA_HOME is set, otherwise "java" from the PATH (Java 21 or newer).
+#
+# Usage: e-invoice-generator [--config <directory>] [--help]
+
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+jar="$script_dir/e-invoice-generator.jar"
+
+if [[ ! -f "$jar" ]]; then
+    echo "e-invoice-generator.jar not found next to this script: $jar" >&2
+    exit 1
+fi
+
+if [[ -n "${JAVA_HOME:-}" ]]; then
+    java="$JAVA_HOME/bin/java"
+else
+    java="java"
+fi
+
+exec "$java" -jar "$jar" "$@"
