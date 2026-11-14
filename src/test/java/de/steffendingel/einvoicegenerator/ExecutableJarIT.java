@@ -64,7 +64,7 @@ class ExecutableJarIT {
         Result result = run(java("--help"), "");
 
         assertThat(result.exitCode()).as(result.output()).isZero();
-        assertThat(result.output()).contains("Aufruf: e-invoice-generator [--config <Ordner>]");
+        assertThat(result.output()).contains("Usage: e-invoice-generator [--config <directory>]");
     }
 
     @Test
@@ -83,7 +83,7 @@ class ExecutableJarIT {
         Result result = run(List.of("bash", SCRIPT.toAbsolutePath().toString(), "--help"), "");
 
         assertThat(result.exitCode()).as(result.output()).isZero();
-        assertThat(result.output()).contains("Aufruf: e-invoice-generator");
+        assertThat(result.output()).contains("Usage: e-invoice-generator");
     }
 
     @Test
@@ -92,7 +92,7 @@ class ExecutableJarIT {
         Result result = run(List.of("cmd", "/c", WINDOWS_SCRIPT.toAbsolutePath().toString(), "--help"), "");
 
         assertThat(result.exitCode()).as(result.output()).isZero();
-        assertThat(result.output()).contains("Aufruf: e-invoice-generator");
+        assertThat(result.output()).contains("Usage: e-invoice-generator");
     }
 
     @Test
@@ -115,7 +115,7 @@ class ExecutableJarIT {
         Result result = run(java(), "\n02.11.2026\n\n37,5\nnachweis.pdf\n\n");
 
         assertThat(result.exitCode()).as(result.output()).isZero();
-        assertThat(result.output()).contains("✔ ⑨ E-Rechnung validiert").contains("Rechnung erzeugt:");
+        assertThat(result.output()).contains("✔ ⑨ E-invoice validated").contains("Invoice created:");
         Path invoice = home.resolve("rechnungen/2026-11-02 Max Mustermann Beispielkunde Rechnung 302 für 2026-10.pdf");
         assertThat(invoice).exists();
         assertThat(new MustangValidator().validate(Files.readAllBytes(invoice)).valid()).isTrue();

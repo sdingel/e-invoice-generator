@@ -9,8 +9,8 @@ timesheet. The plan and all decisions are in `PLAN.md`.
   commit messages, pull requests and issues.
 - **Exceptions:**
   - `PLAN.md` stays German.
-  - User-facing text is German where it belongs to the domain: invoice template content (German
-    invoices), console dialog of the tool.
+  - User-facing text is German where it belongs to the German invoice: invoice template content, the
+    default file name template and the timesheet label. The console dialog of the tool is English.
   - Review comments on pull requests may be German. Reply in the language of the comment you are
     answering.
 - Conversations with the owner are in German.

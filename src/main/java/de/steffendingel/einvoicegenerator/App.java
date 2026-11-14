@@ -40,12 +40,12 @@ public final class App {
     static final String DEFAULT_CONFIG_DIRECTORY = "rechnungen/config";
 
     private static final String USAGE = """
-            Aufruf: e-invoice-generator [--config <Ordner>] [--help] [--version]
+            Usage: e-invoice-generator [--config <directory>] [--help] [--version]
 
-              --config <Ordner>  Konfigurationsordner mit settings.yaml, customers.yaml und invoice-counter
-                                 (Standard: ~/rechnungen/config)
-              --help             diese Hilfe
-              --version          Versionsnummer
+              --config <directory>  configuration directory with settings.yaml, customers.yaml and
+                                    invoice-counter (default: ~/rechnungen/config)
+              --help                show this help
+              --version             show the version
             """;
 
     /** What the command line asks for. */
@@ -64,7 +64,7 @@ public final class App {
         try (JLineConsole console = new JLineConsole()) {
             exitCode = run(args, console, home, Path.of("").toAbsolutePath(), LocalDate.now(), System.err);
         } catch (IOException e) {
-            System.err.println("Terminal kann nicht geöffnet werden: " + e.getMessage());
+            System.err.println("Cannot open the terminal: " + e.getMessage());
             exitCode = InteractiveDialog.FAILED;
         }
         System.exit(exitCode);
@@ -99,18 +99,18 @@ public final class App {
         InvoiceService service;
         try {
             if (!Files.isDirectory(configDirectory)) {
-                throw new ConfigException("Konfigurationsordner nicht gefunden: " + configDirectory
-                        + ". Vorlagen liegen im Repository unter examples/config/.");
+                throw new ConfigException("configuration directory not found: " + configDirectory
+                        + ". Examples are in the repository under examples/config/.");
             }
             ConfigLoader loader = new ConfigLoader(home);
             settings = loader.loadSettings(configDirectory.resolve("settings.yaml"));
             customers = loader.loadCustomers(configDirectory.resolve("customers.yaml"));
             service = createService(settings);
         } catch (ConfigException e) {
-            err.println("Konfiguration: " + e.getMessage());
+            err.println("Configuration: " + e.getMessage());
             return InteractiveDialog.FAILED;
         } catch (IOException | IllegalArgumentException e) {
-            err.println("Start nicht möglich: " + e.getMessage());
+            err.println("Cannot start: " + e.getMessage());
             return InteractiveDialog.FAILED;
         }
         return new InteractiveDialog(service, customers, console, today, workingDirectory, home).run();
@@ -148,14 +148,14 @@ public final class App {
                 }
                 case "--config" -> {
                     if (i + 1 >= args.length) {
-                        throw new IllegalArgumentException("--config braucht einen Ordner.");
+                        throw new IllegalArgumentException("--config needs a directory.");
                     }
                     String value = args[++i];
                     // Expanded here because not every shell does it (e.g. cmd.exe); "~\cfg" is the Windows spelling
                     boolean inHome = value.startsWith("~/") || value.startsWith("~\\");
                     directory = inHome ? home.resolve(value.substring(2)) : Path.of(value);
                 }
-                default -> throw new IllegalArgumentException("Unbekannte Option: " + args[i]);
+                default -> throw new IllegalArgumentException("Unknown option: " + args[i]);
             }
         }
         return new Options(Command.RUN, directory.toAbsolutePath().normalize());

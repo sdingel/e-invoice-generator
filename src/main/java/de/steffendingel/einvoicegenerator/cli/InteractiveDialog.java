@@ -28,7 +28,8 @@ import java.util.Optional;
 
 /**
  * The interactive dialog: asks for customer, invoice date, billing period, hours and timesheet, shows a
- * summary and generates the invoice after confirmation. User-facing texts are German (see CLAUDE.md).
+ * summary and generates the invoice after confirmation. The texts are English; the invoice itself is
+ * German (formats, timesheet label).
  */
 public final class InteractiveDialog {
 
@@ -45,17 +46,17 @@ public final class InteractiveDialog {
     private static final DateTimeFormatter MONTH_OUTPUT = DateTimeFormatter.ofPattern("MM/yyyy");
 
     private static final Map<Step, String> STEP_TEXTS = Map.ofEntries(
-            Map.entry(Step.CALCULATE_INVOICE, "Rechnungsnummer geprüft"),
-            Map.entry(Step.FILL_TEMPLATE, "Template gefüllt"),
-            Map.entry(Step.RENDER_PDF, "PDF erzeugt"),
-            Map.entry(Step.CHECK_TEXT, "Text im PDF geprüft"),
-            Map.entry(Step.APPEND_TIMESHEETS, "Nachweis angehängt"),
-            Map.entry(Step.CHECK_PDF_A, "PDF/A-3b geprüft"),
-            Map.entry(Step.CREATE_XML, "XML erzeugt"),
-            Map.entry(Step.EMBED_XML, "XML eingebettet"),
-            Map.entry(Step.VALIDATE_E_INVOICE, "E-Rechnung validiert"),
-            Map.entry(Step.STORE_INVOICE, "Rechnung gespeichert"),
-            Map.entry(Step.INCREMENT_NUMBER, "Rechnungsnummer hochgezählt"));
+            Map.entry(Step.CALCULATE_INVOICE, "Invoice number checked"),
+            Map.entry(Step.FILL_TEMPLATE, "Template filled"),
+            Map.entry(Step.RENDER_PDF, "PDF created"),
+            Map.entry(Step.CHECK_TEXT, "Text in the PDF checked"),
+            Map.entry(Step.APPEND_TIMESHEETS, "Timesheet appended"),
+            Map.entry(Step.CHECK_PDF_A, "PDF/A-3b checked"),
+            Map.entry(Step.CREATE_XML, "XML created"),
+            Map.entry(Step.EMBED_XML, "XML embedded"),
+            Map.entry(Step.VALIDATE_E_INVOICE, "E-invoice validated"),
+            Map.entry(Step.STORE_INVOICE, "Invoice stored"),
+            Map.entry(Step.INCREMENT_NUMBER, "Invoice number incremented"));
 
     private final InvoiceService service;
     private final List<Customer> customers;
@@ -87,25 +88,25 @@ public final class InteractiveDialog {
             return dialog();
         } catch (DialogAbortedException e) {
             console.println();
-            console.println("Abgebrochen, es wurde keine Rechnung erzeugt.");
+            console.println("Aborted, no invoice was created.");
             return ABORTED;
         } catch (IOException e) {
-            console.println("✘ Fehler: " + e.getMessage());
+            console.println("✘ Error: " + e.getMessage());
             return FAILED;
         }
     }
 
     private int dialog() throws IOException {
         Customer customer = askCustomer();
-        LocalDate invoiceDate = askDate("Rechnungsdatum", today);
+        LocalDate invoiceDate = askDate("Invoice date", today);
         BillingPeriod period = askPeriod(BillingPeriod.previousMonthOf(invoiceDate));
 
         Optional<String> existing = service.findExisting(customer, period);
         if (existing.isPresent()) {
-            console.println("⚠ Für " + customer.shortName() + " gibt es schon eine Rechnung für "
+            console.println("⚠ There is already an invoice for " + customer.shortName() + " for "
                     + MONTH_OUTPUT.format(period.from()) + ":");
             console.println("  " + existing.get());
-            if (!askYesNo("Trotzdem fortfahren?", false)) {
+            if (!askYesNo("Continue anyway?", false)) {
                 return abort();
             }
         }
@@ -115,20 +116,20 @@ public final class InteractiveDialog {
         Invoice invoice = service.prepare(new InvoiceRequest(customer, period, hours, invoiceDate));
 
         printSummary(invoice, timesheet);
-        if (!askYesNo("Rechnung erzeugen?", true)) {
+        if (!askYesNo("Create the invoice?", true)) {
             return abort();
         }
         return generate(invoice, timesheet);
     }
 
     private Customer askCustomer() {
-        console.println("Kunde:");
+        console.println("Customer:");
         for (int i = 0; i < customers.size(); i++) {
             Customer customer = customers.get(i);
             console.println(String.format("  %d) %-12s %s", i + 1, customer.id(), customer.name()));
         }
         while (true) {
-            String answer = console.readLine("Auswahl [1]: ").trim();
+            String answer = console.readLine("Choice [1]: ").trim();
             if (answer.isEmpty()) {
                 return customers.get(0);
             }
@@ -137,7 +138,7 @@ public final class InteractiveDialog {
                     return customers.get(i);
                 }
             }
-            console.println("  Bitte eine Nummer von 1 bis " + customers.size() + " oder eine Kunden-ID eingeben.");
+            console.println("  Please enter a number from 1 to " + customers.size() + " or a customer ID.");
         }
     }
 
@@ -150,7 +151,7 @@ public final class InteractiveDialog {
             try {
                 return LocalDate.parse(answer, DATE_INPUT);
             } catch (DateTimeParseException e) {
-                console.println("  Bitte ein Datum wie 09.11.2026 eingeben.");
+                console.println("  Please enter a date like 09.11.2026 (day.month.year).");
             }
         }
     }
@@ -158,21 +159,21 @@ public final class InteractiveDialog {
     private BillingPeriod askPeriod(BillingPeriod defaultValue) {
         String defaultMonth = MONTH_OUTPUT.format(defaultValue.from());
         while (true) {
-            String answer = console.readLine("Leistungszeitraum [" + defaultMonth + "]: ").trim();
+            String answer = console.readLine("Billing period [" + defaultMonth + "]: ").trim();
             if (answer.isEmpty()) {
                 return defaultValue;
             }
             try {
                 return BillingPeriod.of(YearMonth.parse(answer, MONTH_INPUT));
             } catch (DateTimeParseException e) {
-                console.println("  Bitte einen Monat wie 10/2026 eingeben.");
+                console.println("  Please enter a month like 10/2026.");
             }
         }
     }
 
     private BigDecimal askHours() {
         while (true) {
-            String answer = console.readLine("Stunden: ").trim().replace(',', '.');
+            String answer = console.readLine("Hours: ").trim().replace(',', '.');
             try {
                 BigDecimal hours = new BigDecimal(answer);
                 if (hours.signum() > 0) {
@@ -181,14 +182,14 @@ public final class InteractiveDialog {
             } catch (NumberFormatException e) {
                 // asked again below
             }
-            console.println("  Bitte eine positive Zahl eingeben, z. B. 37,5.");
+            console.println("  Please enter a positive number, e.g. 37.5.");
         }
     }
 
     private Timesheet askTimesheet(BillingPeriod period) throws IOException {
         String label = "Tätigkeitsnachweis " + MONTH_OUTPUT.format(period.from());
         while (true) {
-            String answer = console.readPath("Tätigkeitsnachweis (PDF): ").trim();
+            String answer = console.readPath("Timesheet (PDF): ").trim();
             Optional<Path> file = resolve(answer);
             if (file.isEmpty()) {
                 continue;
@@ -196,19 +197,19 @@ public final class InteractiveDialog {
             Timesheet timesheet = new Timesheet(file.get().getFileName().toString(), label, Files.readAllBytes(file.get()));
             ValidationResult check = service.checkTimesheet(timesheet);
             if (check.valid()) {
-                console.println("✔ Nachweis geeignet");
+                console.println("✔ Timesheet is suitable");
                 return timesheet;
             }
-            console.println("✘ Der Nachweis kann nicht verwendet werden: " + check.summary());
+            console.println("✘ The timesheet cannot be used: " + check.summary());
             check.problems().forEach(problem -> console.println("  - " + problem));
-            console.println("  Bitte eine andere Datei angeben (z. B. als PDF/A exportiert).");
+            console.println("  Please choose another file (e.g. exported as PDF/A).");
         }
     }
 
     /** Resolves "~" and relative paths; prints a message and returns empty if there is no such file. */
     private Optional<Path> resolve(String input) {
         if (input.isEmpty()) {
-            console.println("  Bitte den Pfad zur PDF-Datei angeben.");
+            console.println("  Please enter the path to the PDF file.");
             return Optional.empty();
         }
         String unquoted = input.length() > 1 && input.startsWith("\"") && input.endsWith("\"")
@@ -219,11 +220,11 @@ public final class InteractiveDialog {
                     : unquoted.startsWith("~/") ? homeDirectory.resolve(unquoted.substring(2))
                     : workingDirectory.resolve(unquoted);
         } catch (InvalidPathException e) {
-            console.println("  Ungültiger Pfad: " + input);
+            console.println("  Invalid path: " + input);
             return Optional.empty();
         }
         if (!Files.isRegularFile(path)) {
-            console.println("  Datei nicht gefunden: " + path);
+            console.println("  File not found: " + path);
             return Optional.empty();
         }
         return Optional.of(path.normalize());
@@ -231,32 +232,32 @@ public final class InteractiveDialog {
 
     private boolean askYesNo(String question, boolean defaultValue) {
         while (true) {
-            String answer = console.readLine(question + (defaultValue ? " [J/n]: " : " [j/N]: ")).trim().toLowerCase();
+            String answer = console.readLine(question + (defaultValue ? " [Y/n]: " : " [y/N]: ")).trim().toLowerCase();
             if (answer.isEmpty()) {
                 return defaultValue;
             }
-            if (answer.equals("j") || answer.equals("ja")) {
+            if (answer.equals("y") || answer.equals("yes")) {
                 return true;
             }
-            if (answer.equals("n") || answer.equals("nein")) {
+            if (answer.equals("n") || answer.equals("no")) {
                 return false;
             }
-            console.println("  Bitte j oder n eingeben.");
+            console.println("  Please enter y or n.");
         }
     }
 
     private void printSummary(Invoice invoice, Timesheet timesheet) {
         console.println(LINE);
-        console.println("Rechnung Nr. " + invoice.number() + " an " + invoice.customer().name());
-        console.println(row("Rechnungsdatum", GermanFormat.date(invoice.invoiceDate())));
-        console.println(row("Leistungszeitraum", GermanFormat.date(invoice.period().from()) + " – "
+        console.println("Invoice no. " + invoice.number() + " to " + invoice.customer().name());
+        console.println(row("Invoice date", GermanFormat.date(invoice.invoiceDate())));
+        console.println(row("Billing period", GermanFormat.date(invoice.period().from()) + " – "
                 + GermanFormat.date(invoice.period().to())));
         console.println(row(GermanFormat.decimal(invoice.hours()) + " h × " + GermanFormat.money(invoice.hourlyRate()),
                 amount(invoice.netAmount())));
-        console.println(row("zzgl. " + GermanFormat.percent(invoice.vatRate()) + " USt", amount(invoice.vatAmount())));
-        console.println(row("Gesamt", amount(invoice.grossAmount())));
-        console.println(row("Fällig am", GermanFormat.date(invoice.dueDate())));
-        console.println(row("Anlage", timesheet.label() + " (" + timesheet.fileName() + ")"));
+        console.println(row("plus " + GermanFormat.percent(invoice.vatRate()) + " VAT", amount(invoice.vatAmount())));
+        console.println(row("Total", amount(invoice.grossAmount())));
+        console.println(row("Due date", GermanFormat.date(invoice.dueDate())));
+        console.println(row("Attachment", timesheet.label() + " (" + timesheet.fileName() + ")"));
         console.println(LINE);
     }
 
@@ -274,20 +275,20 @@ public final class InteractiveDialog {
             String stored = service.generate(invoice, List.of(timesheet),
                     step -> console.println("✔ " + step.number() + " " + STEP_TEXTS.get(step)));
             console.println();
-            console.println("Rechnung erzeugt: " + stored);
+            console.println("Invoice created: " + stored);
             return CREATED;
         } catch (InvoiceGenerationException e) {
-            console.println("✘ Fehler in Schritt " + e.getMessage());
+            console.println("✘ Error in step " + e.getMessage());
             e.problems().forEach(problem -> console.println("  - " + problem));
             console.println(e.step() == Step.INCREMENT_NUMBER
-                    ? "Die Rechnung wurde gespeichert, aber der Rechnungszähler nicht hochgezählt (siehe oben)."
-                    : "Es wurde keine Rechnung gespeichert, die Rechnungsnummer ist weiterhin frei.");
+                    ? "The invoice was stored, but the invoice counter was not incremented (see above)."
+                    : "No invoice was stored; the invoice number is still free.");
             return FAILED;
         }
     }
 
     private int abort() {
-        console.println("Abgebrochen, es wurde keine Rechnung erzeugt.");
+        console.println("Aborted, no invoice was created.");
         return ABORTED;
     }
 }
