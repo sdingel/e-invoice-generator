@@ -127,11 +127,15 @@ e-invoice-generator                       # Linux, WSL, macOS
 e-invoice-generator.cmd                   # Windows
 java -jar e-invoice-generator.jar         # without the scripts
 e-invoice-generator --config ~/my-config  # other configuration directory
+e-invoice-generator --version             # show the version
 ```
 
 The dialog asks for customer, invoice date, billing period (month), hours and the timesheet (Tab completes
 file names), shows a summary and creates the e-invoice after confirmation, reporting each step ① to ⑪.
 Exit code: 0 invoice created, 1 error, 2 aborted.
+
+Each invoice names the tool with its version in the PDF metadata (Producer, Creator, and the XMP
+CreatorTool with the project URL).
 
 ## Build
 

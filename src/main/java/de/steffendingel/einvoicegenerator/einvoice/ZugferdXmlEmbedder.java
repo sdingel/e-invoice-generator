@@ -1,5 +1,7 @@
 package de.steffendingel.einvoicegenerator.einvoice;
 
+import de.steffendingel.einvoicegenerator.AppInfo;
+
 import org.mustangproject.ZUGFeRD.PDFAConformanceLevel;
 import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromA3;
 
@@ -9,7 +11,8 @@ import java.util.Objects;
 
 /**
  * Step ⑧ with Mustang: embeds the XML as {@code factur-x.xml} into the PDF/A-3 document and writes the
- * ZUGFeRD and PDF/A metadata.
+ * ZUGFeRD and PDF/A metadata. Producer and creator name the tool with its version, the creator tool
+ * (XMP) also the project URL.
  */
 public final class ZugferdXmlEmbedder implements EInvoiceXmlEmbedder {
 
@@ -18,9 +21,10 @@ public final class ZugferdXmlEmbedder implements EInvoiceXmlEmbedder {
         Objects.requireNonNull(pdf, "pdf must not be null");
         Objects.requireNonNull(xml, "xml must not be null");
         ByteArrayOutputStream result = new ByteArrayOutputStream();
-        try (ZUGFeRDExporterFromA3 exporter = new ZUGFeRDExporterFromA3()) {
-            exporter.setProducer(Zugferd.PRODUCER)
-                    .setCreator(Zugferd.PRODUCER)
+        try (ZUGFeRDExporterFromA3 exporter = new ProducerFixingExporter()) {
+            exporter.setProducer(AppInfo.nameAndVersion())
+                    .setCreator(AppInfo.nameAndVersion())
+                    .setCreatorTool(AppInfo.nameAndVersion() + " (" + AppInfo.URL + ")")
                     .setProfile(Zugferd.PROFILE)
                     // Mustang would declare PDF/A-3u by default; the documents are created as PDF/A-3b
                     .setConformanceLevel(PDFAConformanceLevel.BASIC)
@@ -31,5 +35,19 @@ public final class ZugferdXmlEmbedder implements EInvoiceXmlEmbedder {
             throw new IOException("cannot embed the XML into the PDF: " + e.getMessage(), e);
         }
         return result.toByteArray();
+    }
+
+    /**
+     * Mustang 2.26.0 appends "(via mustangproject.org ${project.version})" to the producer in the document
+     * information, with an unreplaced placeholder. This exporter writes the same producer as in the XMP
+     * metadata instead.
+     */
+    private static final class ProducerFixingExporter extends ZUGFeRDExporterFromA3 {
+
+        @Override
+        protected void writeDocumentInformation() {
+            super.writeDocumentInformation();
+            doc.getDocumentInformation().setProducer(producer);
+        }
     }
 }

@@ -78,7 +78,20 @@ class AppTest {
             ScriptedConsole console = new ScriptedConsole();
 
             assertThat(run(console, "--help")).isEqualTo(InteractiveDialog.CREATED);
-            assertThat(console.transcript()).contains("Aufruf: e-invoice-generator [--config <Ordner>]");
+            assertThat(console.transcript())
+                    .contains("E-Invoice Generator " + AppInfo.VERSION)
+                    .contains("Aufruf: e-invoice-generator [--config <Ordner>]")
+                    .contains("--version");
+        }
+
+        @Test
+        void showsVersion() {
+            ScriptedConsole console = new ScriptedConsole();
+
+            assertThat(run(console, "--config", "x", "--version")).isEqualTo(InteractiveDialog.CREATED);
+            assertThat(console.transcript())
+                    .contains("E-Invoice Generator " + AppInfo.VERSION)
+                    .contains("https://github.com/sdingel/e-invoice-generator");
         }
 
         @Test
@@ -124,12 +137,15 @@ class AppTest {
     }
 
     @Test
-    void configDirectoryOption() {
+    void parsesTheCommandLine() {
         Path homeDir = Path.of("/home/test");
 
-        assertThat(App.configDirectory(new String[0], homeDir)).isEqualTo(Path.of("/home/test/rechnungen/config"));
-        assertThat(App.configDirectory(new String[] {"--config", "~/cfg"}, homeDir)).isEqualTo(Path.of("/home/test/cfg"));
-        assertThat(App.configDirectory(new String[] {"-h"}, homeDir)).isNull();
-        assertThatIllegalArgumentException().isThrownBy(() -> App.configDirectory(new String[] {"--config"}, homeDir));
+        assertThat(App.parse(new String[0], homeDir))
+                .isEqualTo(new App.Options(App.Command.RUN, Path.of("/home/test/rechnungen/config")));
+        assertThat(App.parse(new String[] {"--config", "~/cfg"}, homeDir))
+                .isEqualTo(new App.Options(App.Command.RUN, Path.of("/home/test/cfg")));
+        assertThat(App.parse(new String[] {"-h"}, homeDir).command()).isEqualTo(App.Command.HELP);
+        assertThat(App.parse(new String[] {"--version"}, homeDir).command()).isEqualTo(App.Command.VERSION);
+        assertThatIllegalArgumentException().isThrownBy(() -> App.parse(new String[] {"--config"}, homeDir));
     }
 }

@@ -2,7 +2,7 @@
 rem Starts the E-Invoice Generator. The JAR must be in the same directory as this script.
 rem Uses %JAVA_HOME%\bin\java.exe if JAVA_HOME is set, otherwise "java" from the PATH (Java 17 or newer).
 rem
-rem Usage: e-invoice-generator [--config <directory>] [--help]
+rem Usage: e-invoice-generator [--config <directory>] [--help] [--version]
 
 setlocal
 

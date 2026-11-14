@@ -14,8 +14,6 @@ final class Zugferd {
     /** ZUGFeRD profile EN 16931 ("Comfort"). */
     static final Profile PROFILE = Profiles.getByName("EN16931");
 
-    static final String PRODUCER = "E-Invoice Generator";
-
     private Zugferd() {
     }
 

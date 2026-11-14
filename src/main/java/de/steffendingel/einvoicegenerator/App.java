@@ -32,20 +32,27 @@ import java.util.logging.Logger;
 /**
  * Entry point: reads the configuration, creates the implementations of the steps and starts the dialog.
  *
- * <p>Usage: {@code e-invoice-generator [--config <directory>]}; the default configuration directory is
- * {@code ~/rechnungen/config}.
+ * <p>Usage: {@code e-invoice-generator [--config <directory>] [--help] [--version]}; the default
+ * configuration directory is {@code ~/rechnungen/config}.
  */
 public final class App {
 
     static final String DEFAULT_CONFIG_DIRECTORY = "rechnungen/config";
 
     private static final String USAGE = """
-            Aufruf: e-invoice-generator [--config <Ordner>]
+            Aufruf: e-invoice-generator [--config <Ordner>] [--help] [--version]
 
               --config <Ordner>  Konfigurationsordner mit settings.yaml, customers.yaml und invoice-counter
                                  (Standard: ~/rechnungen/config)
               --help             diese Hilfe
+              --version          Versionsnummer
             """;
+
+    /** What the command line asks for. */
+    enum Command { RUN, HELP, VERSION }
+
+    /** Parsed command line. */
+    record Options(Command command, Path configDirectory) {}
 
     private App() {
     }
@@ -69,18 +76,23 @@ public final class App {
      * @return exit code: 0 invoice created, 1 error, 2 aborted by the user
      */
     static int run(String[] args, Console console, Path home, Path workingDirectory, LocalDate today, PrintStream err) {
-        Path configDirectory;
+        Options options;
         try {
-            configDirectory = configDirectory(args, home);
+            options = parse(args, home);
         } catch (IllegalArgumentException e) {
             err.println(e.getMessage());
             err.print(USAGE);
             return InteractiveDialog.FAILED;
         }
-        if (configDirectory == null) {
-            console.println(USAGE);
+        if (options.command() == Command.HELP) {
+            console.println(AppInfo.nameAndVersion() + "\n\n" + USAGE);
             return InteractiveDialog.CREATED;
         }
+        if (options.command() == Command.VERSION) {
+            console.println(AppInfo.nameAndVersion() + "\n" + AppInfo.URL);
+            return InteractiveDialog.CREATED;
+        }
+        Path configDirectory = options.configDirectory();
 
         Settings settings;
         List<Customer> customers;
@@ -123,13 +135,16 @@ public final class App {
                 new FileInvoiceArchive(settings.outputDir(), settings.fileNameTemplate()));
     }
 
-    /** Returns the configuration directory, or {@code null} if only the help was requested. */
-    static Path configDirectory(String[] args, Path home) {
+    /** Parses the command line; {@code --help} and {@code --version} end the parsing. */
+    static Options parse(String[] args, Path home) {
         Path directory = home.resolve(DEFAULT_CONFIG_DIRECTORY);
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "--help", "-h" -> {
-                    return null;
+                    return new Options(Command.HELP, null);
+                }
+                case "--version" -> {
+                    return new Options(Command.VERSION, null);
                 }
                 case "--config" -> {
                     if (i + 1 >= args.length) {
@@ -141,7 +156,7 @@ public final class App {
                 default -> throw new IllegalArgumentException("Unbekannte Option: " + args[i]);
             }
         }
-        return directory.toAbsolutePath().normalize();
+        return new Options(Command.RUN, directory.toAbsolutePath().normalize());
     }
 
     /**

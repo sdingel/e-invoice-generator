@@ -566,12 +566,22 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      - `ExecutableJarIT` (Failsafe, nach dem Bauen) startet das fertige JAR: `--help`, das Linux-Skript und
        ein kompletter Durchlauf bis zur gültigen E-Rechnung.
      - Der CI-Build stellt JAR und Startskripte als Download bereit (Artefakt „e-invoice-generator“).
-   - **Nächster Schritt: Versionsnummer** (Entscheidungen vom 14.11.2026, Version bleibt vorerst
-     `0.1.0-SNAPSHOT`, bis der Nutzer eine feste Version freigibt):
-     - **Versionsnummer:** `--version` zeigt sie an, die Hilfe ebenfalls. Sie kommt in die PDF-Metadaten jeder
-       Rechnung (Producer/Creator, z. B. „E-Invoice Generator 0.1.0“), dazu nach Möglichkeit der Link
-       https://github.com/sdingel/e-invoice-generator (z. B. im Creator-Tool-Eintrag der XMP-Metadaten).
-       Version aus der `pom.xml` (z. B. über das Manifest), damit sie nur an einer Stelle steht.
+   - ✔ **Versionsnummer** (14.11.2026; Version bleibt vorerst `0.1.0-SNAPSHOT`, bis der Nutzer eine feste
+     Version freigibt):
+     - Name, Version und Projekt-URL stehen nur in der `pom.xml` (`<name>`, `<version>`, `<url>`). Maven trägt
+       sie beim Bauen in `app.properties` ein (eigener Ordner `src/main/resources-filtered/`, weil das Filtern
+       die Schriften und die `${…}`-Ausdrücke der FreeMarker-Templates beschädigen würde); `AppInfo` liest sie.
+       Gewählt statt des Manifests, weil das Manifest nur im fertigen JAR existiert, nicht in Tests und
+       `exec:java`.
+     - `--version` zeigt „E-Invoice Generator 0.1.0-SNAPSHOT“ und den Link, `--help` die Version in der ersten
+       Zeile.
+     - PDF-Metadaten jeder Rechnung (⑧): Producer und Creator (Dokumentinformationen und XMP)
+       „E-Invoice Generator 0.1.0-SNAPSHOT“, XMP-`CreatorTool` zusätzlich mit
+       „(https://github.com/sdingel/e-invoice-generator)“. Vorher stand dort „mustangproject“.
+     - Mustang 2.26.0 hängt an den Producer in den Dokumentinformationen „(via mustangproject.org
+       ${project.version})“ mit nicht ersetztem Platzhalter an. `ZugferdXmlEmbedder` überschreibt dafür
+       `writeDocumentInformation` und schreibt denselben Producer wie in den XMP-Metadaten.
+   - **Nächster Schritt: PoC aus dem Code entfernen** (siehe unten).
    - **Danach geplant** (aufgenommen am 14.11.2026, Details noch zu klären):
      - **PoC aus dem Code entfernen:** Package `de.steffendingel.einvoicegenerator.poc`, Template-Kopie in
        `src/main/resources/poc/`, die PoC-Abschnitte in README und `CLAUDE.md`. Die Erkenntnisse in

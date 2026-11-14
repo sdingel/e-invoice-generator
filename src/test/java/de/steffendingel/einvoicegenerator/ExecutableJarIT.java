@@ -63,6 +63,14 @@ class ExecutableJarIT {
     }
 
     @Test
+    void showsTheVersionFromThePom() throws Exception {
+        Result result = run(java("--version"), "");
+
+        assertThat(result.exitCode()).as(result.output()).isZero();
+        assertThat(result.output()).startsWith("E-Invoice Generator " + AppInfo.VERSION).doesNotContain("${");
+    }
+
+    @Test
     void startScriptRunsTheJar() throws Exception {
         assertThat(SCRIPT).exists();
 
