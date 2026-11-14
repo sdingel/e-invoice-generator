@@ -1,15 +1,14 @@
 # e-invoice-generator
 
 Command-line tool that generates hybrid ZUGFeRD e-invoices (PDF/A-3 with embedded XML) including a
-timesheet. Planning happens in GitHub issues (see Workflow). `PLAN.md` holds the earlier plan and
-decisions; it is being moved into issues and the README and will then be deleted.
+timesheet. Planning happens in GitHub issues (see Workflow); how the tool is built and why is in
+`docs/architecture.md`.
 
 ## Language
 
 - **Everything in the repository is English:** code, identifiers, comments, Javadoc, documentation,
   commit messages, pull requests and issues.
 - **Exceptions:**
-  - `PLAN.md` stays German.
   - User-facing text is German where it belongs to the German invoice: invoice template content, the
     default file name template and the timesheet label. The console dialog of the tool is English.
   - Review comments on pull requests may be German. Reply in the language of the comment you are
