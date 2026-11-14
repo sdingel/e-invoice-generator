@@ -563,8 +563,9 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      - Startskripte `e-invoice-generator` (Linux/WSL/macOS) und `e-invoice-generator.cmd` (Windows) in
        `src/dist/`, beim Bauen neben das JAR nach `target/` kopiert. Das Windows-Skript setzt die Codepage auf
        UTF-8 (`chcp 65001`) und wird vom Nutzer auf Windows getestet.
-     - `ExecutableJarIT` (Failsafe, nach dem Bauen) startet das fertige JAR: `--help`, das Linux-Skript und
-       ein kompletter Durchlauf bis zur gültigen E-Rechnung.
+     - `ExecutableJarIT` (Failsafe, nach dem Bauen) startet das fertige JAR: `--help`, das Startskript des
+       Systems (unter Windows `e-invoice-generator.cmd`, sonst das bash-Skript; seit 14.11.2026, nachdem der
+       bash-Test unter Windows an den Pfaden scheiterte) und ein kompletter Durchlauf bis zur gültigen E-Rechnung.
      - Der CI-Build stellt JAR und Startskripte als Download bereit (Artefakt „e-invoice-generator“).
    - ✔ **Versionsnummer** (14.11.2026; Version bleibt vorerst `0.1.0-SNAPSHOT`, bis der Nutzer eine feste
      Version freigibt):
