@@ -16,7 +16,7 @@
     seller       name, address.street/zip/city/country, vatId, taxNumber, iban, bic, email
     customer     name, address.street/zip/city/country, vatId, email, itemText,
                  fields.<key> (free placeholders from customers.yaml, may be missing)
-    attachments  list of attachment labels, e.g. "Stundennachweis 10/2026"
+    attachments  list of attachment labels, e.g. "Tätigkeitsnachweis 10/2026"
     logo         file URI of the logo (missing if no logo is configured)
     format       money(), decimal(), percent(), date(), shortDate(), iban()
 
