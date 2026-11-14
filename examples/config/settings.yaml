@@ -19,7 +19,7 @@ seller:
 # Paths: "~/" is the home directory, relative paths are relative to this file.
 # (A bare "~" means "empty" in YAML, so always write "~/...".)
 outputDir: ~/rechnungen
-logo:                       # optional, e.g. logo.svg
+logo:                       # optional: PDF, PNG or JPEG, e.g. logo.pdf
 template:                   # optional, e.g. invoice.ftlh (otherwise the built-in template is used)
 
 # File name of the invoices (optional). Placeholders: {invoiceDate} (2026-11-09), {period} (2026-10,
