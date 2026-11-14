@@ -67,7 +67,7 @@ class AppTest {
         assertThat(invoice).exists();
         assertThat(new MustangValidator().validate(Files.readAllBytes(invoice)).valid()).isTrue();
         assertThat(Files.readString(configDir.resolve("invoice-counter")).trim()).isEqualTo("303");
-        assertThat(console.transcript()).contains("Rechnung erzeugt: " + invoice);
+        assertThat(console.transcript()).contains("Invoice created: " + invoice);
     }
 
     @Nested
@@ -80,7 +80,7 @@ class AppTest {
             assertThat(run(console, "--help")).isEqualTo(InteractiveDialog.CREATED);
             assertThat(console.transcript())
                     .contains("E-Invoice Generator " + AppInfo.VERSION)
-                    .contains("Aufruf: e-invoice-generator [--config <Ordner>]")
+                    .contains("Usage: e-invoice-generator [--config <directory>]")
                     .contains("--version");
         }
 
@@ -97,7 +97,7 @@ class AppTest {
         @Test
         void rejectsUnknownOptions() {
             assertThat(run(new ScriptedConsole(), "--konfig", "x")).isEqualTo(InteractiveDialog.FAILED);
-            assertThat(errors()).contains("Unbekannte Option: --konfig").contains("Aufruf:");
+            assertThat(errors()).contains("Unknown option: --konfig").contains("Usage:");
         }
 
         @Test
@@ -113,7 +113,7 @@ class AppTest {
             Path missing = workDir.resolve("gibt-es-nicht");
 
             assertThat(run(new ScriptedConsole(), "--config", missing.toString())).isEqualTo(InteractiveDialog.FAILED);
-            assertThat(errors()).contains("Konfigurationsordner nicht gefunden: " + missing).contains("examples/config");
+            assertThat(errors()).contains("configuration directory not found: " + missing).contains("examples/config");
         }
 
         @Test

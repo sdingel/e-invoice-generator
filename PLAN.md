@@ -590,13 +590,18 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
    - ✔ **PoC aus dem Code entfernt** (14.11.2026): Package `de.steffendingel.einvoicegenerator.poc`,
      Template-Kopie in `src/main/resources/poc/`, die PoC-Abschnitte in README und `CLAUDE.md`. Die
      Erkenntnisse in Abschnitt 11 bleiben als Dokumentation erhalten.
-   - **Nächster Schritt** (aufgenommen am 14.11.2026, Details noch zu klären):
-     - **Nutzung durch englischsprachige Nutzer prüfen:** Was heute deutsch ist bzw. gemischt erscheint, z. B.
-       der Konsolendialog, die Fehlermeldungen (teils deutsch aus dem Dialog, teils englisch aus den
-       einzelnen Schritten), das eingebaute Rechnungs-Template, das Standard-Dateinamen-Template
-       („Rechnung … für …“), der Zahlungshinweis im XML („Zahlbar bis …“), das deutsche Zahlen- und
-       Datumsformat (`GermanFormat`). Zu klären: Sprache einstellbar (z. B. `language:` in `settings.yaml`)
-       oder durchgehend englisch mit deutschen Rechnungsinhalten?
+   - ✔ **Englische Bedienung** (Entscheidung vom 14.11.2026: Variante „durchgehend englisch“, nicht
+     einstellbar): Dialog, Fortschritt ①–⑪, Zusammenfassung, Hilfe und Fehlermeldungen von `App` und Dialog
+     sind englisch (die Meldungen der Schritte und der Konfiguration waren es schon), Ja/Nein als `[Y/n]`
+     mit y/yes/n/no. Damit sind die früheren Angaben „deutsche Texte“ im Dialog (Abschnitt 9, Schritte
+     Dialog und Fortschritt) überholt.
+     - **Bleibt deutsch**, weil es zur (deutschen) Rechnung gehört: Template, Standard-Dateinamen-Template,
+       Anlagenbezeichnung „Tätigkeitsnachweis MM/JJJJ“, Zahlen und Datumsangaben in der Zusammenfassung
+       (wie auf der Rechnung) und die Eingabeformate für Datum (`TT.MM.JJJJ`) und Monat (`MM/JJJJ`);
+       Stunden gehen mit Komma oder Punkt.
+   - **Später zu klären** (14.11.2026): Zahlungshinweis im XML („Zahlbar bis … ohne Abzug.“) und das
+     Zahlen- und Datumsformat (`GermanFormat`), ggf. zusammen mit den Eingabeformaten im Dialog. Eine
+     Rechnungssprache je Kunde (z. B. `language:` in `customers.yaml`) wäre eine Möglichkeit.
 
 ## 10. Offene Punkte / Risiken
 
