@@ -1,7 +1,8 @@
 # e-invoice-generator
 
 Command-line tool that generates hybrid ZUGFeRD e-invoices (PDF/A-3 with embedded XML) including a
-timesheet. The plan and all decisions are in `PLAN.md`.
+timesheet. Planning happens in GitHub issues (see Workflow). `PLAN.md` holds the earlier plan and
+decisions; it is being moved into issues and the README and will then be deleted.
 
 ## Language
 
@@ -23,12 +24,38 @@ timesheet. The plan and all decisions are in `PLAN.md`.
 - The repository is public: never commit real personal data (addresses, IBAN, tax IDs, customer
   data, real timesheets). Use obvious example data instead.
 
-## Workflow
+## Workflow with GitHub issues
 
-- Changes go through pull requests; `main` is protected. Claude never merges and never pushes to `main`
-  (see `.claude/settings.json`).
-- GitHub deletes a branch when its pull request is merged. Afterwards, Claude updates `main` with
-  `git pull --prune` and deletes its local copy of the branch.
+- Planning and implementation are tracked in GitHub issues: a feature is discussed first, then one or
+  more issues are written together with the user.
+- Issues are implemented one at a time, and only when the user explicitly asks for it.
+- Before starting to implement an issue, think it through and ask all foreseeable questions first, so
+  that as few questions as possible come up while coding.
+- One branch and one pull request per issue. The branch name starts with the issue number, e.g.
+  `12-payment-note`. Every change goes through a pull request; `main` is protected, never push to
+  `main` (see `.claude/settings.json`).
+- Only the user merges pull requests; never merge yourself.
+- Pull requests are merged with a merge commit, not squashed, so the full history is kept. The history
+  is meant to reflect the development process as it actually happened; it does not have to be clean,
+  and correction commits are fine.
+- Commit and push all work at the end of every turn, including work in progress, so that nothing exists
+  only in the session. This happens on the branch of the issue; a turn without changes needs no commit.
+  Within a turn, group the changes into meaningful commits before pushing.
+- Never force-push. Pushed commits stay as they are; corrections are made with new commits.
+- Every commit references its issue number in the subject line: `[#12] Short description`. Do not
+  start the subject with `#`, because Git treats such lines as comments when a message is edited in an
+  editor.
+- Commits without an issue are allowed only in special cases the user has explicitly approved. They also
+  go through a branch and a pull request; there is no special rule for their subject line, just a
+  meaningful description. Approved special cases:
+  - Changes to this file (`CLAUDE.md`).
+- When an issue is completely implemented and all open questions to the user are resolved, create the
+  pull request without being asked.
+- The pull request closes its issue automatically: put `Closes #12` in the description. If the pull
+  request implements only part of the issue (which should be an exception), use `Refs #12` instead so
+  the issue stays open.
+- GitHub deletes a branch when its pull request is merged. Afterwards, update `main` with
+  `git pull --prune` and delete the local copy of the branch.
 
 ## Build and run
 
