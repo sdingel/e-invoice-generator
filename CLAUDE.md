@@ -27,6 +27,8 @@ timesheet. The plan and all decisions are in `PLAN.md`.
 
 - Changes go through pull requests; `main` is protected. Claude never merges and never pushes to `main`
   (see `.claude/settings.json`).
+- GitHub deletes a branch when its pull request is merged. Afterwards, Claude updates `main` with
+  `git pull --prune` and deletes its local copy of the branch.
 
 ## Build and run
 
