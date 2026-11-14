@@ -151,7 +151,9 @@ public final class App {
                         throw new IllegalArgumentException("--config braucht einen Ordner.");
                     }
                     String value = args[++i];
-                    directory = value.startsWith("~/") ? home.resolve(value.substring(2)) : Path.of(value);
+                    // Expanded here because not every shell does it (e.g. cmd.exe); "~\cfg" is the Windows spelling
+                    boolean inHome = value.startsWith("~/") || value.startsWith("~\\");
+                    directory = inHome ? home.resolve(value.substring(2)) : Path.of(value);
                 }
                 default -> throw new IllegalArgumentException("Unbekannte Option: " + args[i]);
             }

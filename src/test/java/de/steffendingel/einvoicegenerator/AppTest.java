@@ -138,12 +138,15 @@ class AppTest {
 
     @Test
     void parsesTheCommandLine() {
-        Path homeDir = Path.of("/home/test");
+        // absolute on every system; Path.of("/home/test") alone has no drive letter on Windows
+        Path homeDir = Path.of("/home/test").toAbsolutePath();
 
         assertThat(App.parse(new String[0], homeDir))
-                .isEqualTo(new App.Options(App.Command.RUN, Path.of("/home/test/rechnungen/config")));
+                .isEqualTo(new App.Options(App.Command.RUN, homeDir.resolve("rechnungen/config")));
         assertThat(App.parse(new String[] {"--config", "~/cfg"}, homeDir))
-                .isEqualTo(new App.Options(App.Command.RUN, Path.of("/home/test/cfg")));
+                .isEqualTo(new App.Options(App.Command.RUN, homeDir.resolve("cfg")));
+        assertThat(App.parse(new String[] {"--config", "~\\cfg"}, homeDir))
+                .isEqualTo(new App.Options(App.Command.RUN, homeDir.resolve("cfg")));
         assertThat(App.parse(new String[] {"-h"}, homeDir).command()).isEqualTo(App.Command.HELP);
         assertThat(App.parse(new String[] {"--version"}, homeDir).command()).isEqualTo(App.Command.VERSION);
         assertThatIllegalArgumentException().isThrownBy(() -> App.parse(new String[] {"--config"}, homeDir));
