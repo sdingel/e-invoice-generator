@@ -116,21 +116,21 @@ class InteractiveDialogTest {
             assertThat(timesheet.fileName()).isEqualTo("nachweis.pdf");
         });
         assertThat(console.transcript())
-                .contains("Rechnungsdatum [13.11.2026]: ")
-                .contains("Leistungszeitraum [10/2026]: ")
-                .contains("Rechnung Nr. 304 an Beispiel GmbH")
+                .contains("Invoice date [13.11.2026]: ")
+                .contains("Billing period [10/2026]: ")
+                .contains("Invoice no. 304 to Beispiel GmbH")
                 .contains("37,50 h × 95,00 €")
                 .contains("4.239,38 €")
-                .contains("Fällig am                13.12.2026")
-                .contains("✔ ⑥ PDF/A-3b geprüft")
-                .contains("✔ ⑪ Rechnungsnummer hochgezählt")
-                .contains("Rechnung erzeugt: /invoices/Rechnung 304.pdf");
+                .contains("Due date                 13.12.2026")
+                .contains("✔ ⑥ PDF/A-3b checked")
+                .contains("✔ ⑪ Invoice number incremented")
+                .contains("Invoice created: /invoices/Rechnung 304.pdf");
         assertThat(console.allAnswersUsed()).isTrue();
     }
 
     @Test
     void acceptsOwnValues() {
-        ScriptedConsole console = new ScriptedConsole("muster", "02.01.2027", "11/2026", "12.25", "nachweis.pdf", "j");
+        ScriptedConsole console = new ScriptedConsole("muster", "02.01.2027", "11/2026", "12.25", "nachweis.pdf", "y");
 
         assertThat(run(console)).isEqualTo(InteractiveDialog.CREATED);
         assertThat(generated).singleElement().satisfies(invoice -> {
@@ -141,7 +141,7 @@ class InteractiveDialogTest {
             assertThat(invoice.hours()).isEqualByComparingTo("12.25");
             assertThat(invoice.dueDate()).isEqualTo(LocalDate.of(2027, 1, 16));
         });
-        assertThat(console.transcript()).contains("Leistungszeitraum [12/2026]: 11/2026"); // default follows the date
+        assertThat(console.transcript()).contains("Billing period [12/2026]: 11/2026"); // default follows the date
     }
 
     @Test
@@ -152,16 +152,16 @@ class InteractiveDialogTest {
                 "13/2026", "",                 // no month 13
                 "abc", "0", "8",               // hours must be a positive number
                 "fehlt.pdf", "nachweis.pdf",   // file does not exist
-                "vielleicht", "ja");
+                "maybe", "yes");
 
         assertThat(run(console)).isEqualTo(InteractiveDialog.CREATED);
         assertThat(console.transcript())
-                .contains("Bitte eine Nummer von 1 bis 2 oder eine Kunden-ID eingeben.")
-                .contains("Bitte ein Datum wie 09.11.2026 eingeben.")
-                .contains("Bitte einen Monat wie 10/2026 eingeben.")
-                .contains("Bitte eine positive Zahl eingeben, z. B. 37,5.")
-                .contains("Datei nicht gefunden: " + workDir.resolve("fehlt.pdf"))
-                .contains("Bitte j oder n eingeben.");
+                .contains("Please enter a number from 1 to 2 or a customer ID.")
+                .contains("Please enter a date like 09.11.2026 (day.month.year).")
+                .contains("Please enter a month like 10/2026.")
+                .contains("Please enter a positive number, e.g. 37.5.")
+                .contains("File not found: " + workDir.resolve("fehlt.pdf"))
+                .contains("Please enter y or n.");
         assertThat(generated).singleElement().satisfies(invoice -> {
             assertThat(invoice.customer().id()).isEqualTo("muster");
             assertThat(invoice.period().from()).isEqualTo(LocalDate.of(2026, 11, 1));
@@ -188,9 +188,9 @@ class InteractiveDialogTest {
 
             assertThat(run(console)).isEqualTo(InteractiveDialog.ABORTED);
             assertThat(console.transcript())
-                    .contains("⚠ Für Beispielkunde gibt es schon eine Rechnung für 10/2026:")
-                    .contains("Trotzdem fortfahren? [j/N]: ")
-                    .contains("Abgebrochen, es wurde keine Rechnung erzeugt.");
+                    .contains("⚠ There is already an invoice for Beispielkunde for 10/2026:")
+                    .contains("Continue anyway? [y/N]: ")
+                    .contains("Aborted, no invoice was created.");
             assertThat(generated).isEmpty();
         }
 
@@ -198,7 +198,7 @@ class InteractiveDialogTest {
         void existingInvoiceCanBeIgnored() {
             existing = Optional.of("/invoices/old.pdf");
 
-            assertThat(run(new ScriptedConsole("", "", "", "j", "1", "nachweis.pdf", ""))).isEqualTo(InteractiveDialog.CREATED);
+            assertThat(run(new ScriptedConsole("", "", "", "y", "1", "nachweis.pdf", ""))).isEqualTo(InteractiveDialog.CREATED);
         }
 
         @Test
@@ -211,9 +211,9 @@ class InteractiveDialogTest {
 
             assertThat(run(console)).isEqualTo(InteractiveDialog.CREATED);
             assertThat(console.transcript())
-                    .contains("✘ Der Nachweis kann nicht verwendet werden: not PDF/A-3b compliant")
+                    .contains("✘ The timesheet cannot be used: not PDF/A-3b compliant")
                     .contains("  - rule 6.2.4.3-4: DeviceCMYK")
-                    .contains("✔ Nachweis geeignet");
+                    .contains("✔ Timesheet is suitable");
             assertThat(attachedTimesheets).singleElement().extracting(Timesheet::fileName).isEqualTo("nachweis.pdf");
         }
     }
@@ -235,7 +235,7 @@ class InteractiveDialogTest {
             ScriptedConsole console = new ScriptedConsole("", "");
 
             assertThat(run(console)).isEqualTo(InteractiveDialog.ABORTED);
-            assertThat(console.transcript()).endsWith("Abgebrochen, es wurde keine Rechnung erzeugt.");
+            assertThat(console.transcript()).endsWith("Aborted, no invoice was created.");
         }
 
         @Test
@@ -245,10 +245,10 @@ class InteractiveDialogTest {
 
             assertThat(run(console)).isEqualTo(InteractiveDialog.FAILED);
             assertThat(console.transcript())
-                    .contains("✔ ⑧ XML eingebettet")
-                    .contains("✘ Fehler in Schritt ⑨ invalid e-invoice")
+                    .contains("✔ ⑧ XML embedded")
+                    .contains("✘ Error in step ⑨ invalid e-invoice")
                     .contains("  - error: BR-CO-15 …")
-                    .contains("Es wurde keine Rechnung gespeichert, die Rechnungsnummer ist weiterhin frei.")
+                    .contains("No invoice was stored; the invoice number is still free.")
                     .doesNotContain("⑩");
             assertThat(generated).isEmpty();
         }
