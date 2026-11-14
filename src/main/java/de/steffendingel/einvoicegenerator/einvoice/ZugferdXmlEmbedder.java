@@ -2,6 +2,7 @@ package de.steffendingel.einvoicegenerator.einvoice;
 
 import de.steffendingel.einvoicegenerator.AppInfo;
 
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.mustangproject.ZUGFeRD.PDFAConformanceLevel;
 import org.mustangproject.ZUGFeRD.ZUGFeRDExporterFromA3;
 
@@ -21,7 +22,7 @@ public final class ZugferdXmlEmbedder implements EInvoiceXmlEmbedder {
         Objects.requireNonNull(pdf, "pdf must not be null");
         Objects.requireNonNull(xml, "xml must not be null");
         ByteArrayOutputStream result = new ByteArrayOutputStream();
-        try (ZUGFeRDExporterFromA3 exporter = new ProducerFixingExporter()) {
+        try (ZUGFeRDExporterFromA3 exporter = new MustangVersionFixingExporter()) {
             exporter.setProducer(AppInfo.nameAndVersion())
                     .setCreator(AppInfo.nameAndVersion())
                     .setCreatorTool(AppInfo.nameAndVersion() + " (" + AppInfo.URL + ")")
@@ -38,16 +39,17 @@ public final class ZugferdXmlEmbedder implements EInvoiceXmlEmbedder {
     }
 
     /**
-     * Mustang 2.26.0 appends "(via mustangproject.org ${project.version})" to the producer in the document
-     * information, with an unreplaced placeholder. This exporter writes the same producer as in the XMP
-     * metadata instead.
+     * Mustang appends "(via mustangproject.org &lt;version&gt;)" to the producer in the document information,
+     * but in 2.26.0 the version is an unreplaced placeholder "${project.version}". This exporter fills in the
+     * Mustang version from our POM; once Mustang writes it itself, there is nothing left to replace.
      */
-    private static final class ProducerFixingExporter extends ZUGFeRDExporterFromA3 {
+    private static final class MustangVersionFixingExporter extends ZUGFeRDExporterFromA3 {
 
         @Override
         protected void writeDocumentInformation() {
             super.writeDocumentInformation();
-            doc.getDocumentInformation().setProducer(producer);
+            PDDocumentInformation info = doc.getDocumentInformation();
+            info.setProducer(info.getProducer().replace("${project.version}", AppInfo.MUSTANG_VERSION));
         }
     }
 }

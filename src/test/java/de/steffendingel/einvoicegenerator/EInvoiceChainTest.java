@@ -95,7 +95,8 @@ class EInvoiceChainTest {
             String tool = "E-Invoice Generator " + AppInfo.VERSION;
             String metadata;
             try (PDDocument document = Loader.loadPDF(eInvoice)) {
-                assertThat(document.getDocumentInformation().getProducer()).isEqualTo(tool);
+                assertThat(document.getDocumentInformation().getProducer())
+                        .isEqualTo(tool + " (via mustangproject.org " + AppInfo.MUSTANG_VERSION + ")");
                 assertThat(document.getDocumentInformation().getCreator()).isEqualTo(tool);
                 metadata = new String(document.getDocumentCatalog().getMetadata().toByteArray(), StandardCharsets.UTF_8);
             }

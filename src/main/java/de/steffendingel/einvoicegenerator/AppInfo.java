@@ -6,7 +6,7 @@ import java.io.UncheckedIOException;
 import java.util.Properties;
 
 /**
- * Name, version and project URL of the tool, taken from {@code pom.xml} (filtered resource
+ * Name, version and project URL of the tool and the Mustang version, taken from {@code pom.xml} (filtered resource
  * {@code app.properties}), so that the version is defined in one place only.
  */
 public final class AppInfo {
@@ -19,6 +19,9 @@ public final class AppInfo {
 
     /** Project page, for example "https://github.com/sdingel/e-invoice-generator". */
     public static final String URL;
+
+    /** Version of the Mustang library, for example "2.26.0"; written by Mustang into the PDF producer. */
+    public static final String MUSTANG_VERSION;
 
     static {
         Properties properties = new Properties();
@@ -33,6 +36,7 @@ public final class AppInfo {
         NAME = properties.getProperty("name");
         VERSION = properties.getProperty("version");
         URL = properties.getProperty("url");
+        MUSTANG_VERSION = properties.getProperty("mustangVersion");
     }
 
     private AppInfo() {

@@ -580,7 +580,10 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
        „(https://github.com/sdingel/e-invoice-generator)“. Vorher stand dort „mustangproject“.
      - Mustang 2.26.0 hängt an den Producer in den Dokumentinformationen „(via mustangproject.org
        ${project.version})“ mit nicht ersetztem Platzhalter an. `ZugferdXmlEmbedder` überschreibt dafür
-       `writeDocumentInformation` und schreibt denselben Producer wie in den XMP-Metadaten.
+       `writeDocumentInformation` und setzt die Mustang-Version aus der `pom.xml` ein (Entscheidung vom
+       14.11.2026: Mustang-Hinweis bleibt). Producer in den Dokumentinformationen damit
+       „E-Invoice Generator 0.1.0-SNAPSHOT (via mustangproject.org 2.26.0)“, im XMP ohne Zusatz; die
+       Abweichung ist für PDF/A-3 zulässig (veraPDF und Mustang-Validator ohne Befund).
    - **Nächster Schritt: PoC aus dem Code entfernen** (siehe unten).
    - **Danach geplant** (aufgenommen am 14.11.2026, Details noch zu klären):
      - **PoC aus dem Code entfernen:** Package `de.steffendingel.einvoicegenerator.poc`, Template-Kopie in

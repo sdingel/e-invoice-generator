@@ -11,6 +11,7 @@ class AppInfoTest {
         assertThat(AppInfo.NAME).isEqualTo("E-Invoice Generator");
         assertThat(AppInfo.VERSION).matches("\\d+\\.\\d+\\.\\d+(-SNAPSHOT)?");
         assertThat(AppInfo.URL).isEqualTo("https://github.com/sdingel/e-invoice-generator");
+        assertThat(AppInfo.MUSTANG_VERSION).matches("\\d+\\.\\d+\\.\\d+");
         assertThat(AppInfo.nameAndVersion()).isEqualTo("E-Invoice Generator " + AppInfo.VERSION);
     }
 }
