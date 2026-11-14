@@ -9,7 +9,6 @@ timesheet. The plan and all decisions are in `PLAN.md`.
   commit messages, pull requests and issues.
 - **Exceptions:**
   - `PLAN.md` stays German.
-  - Comments in the throwaway proof of concept (`de.steffendingel.einvoicegenerator.poc`) may stay German.
   - User-facing text is German where it belongs to the domain: invoice template content (German
     invoices), console dialog of the tool.
   - Review comments on pull requests may be German. Reply in the language of the comment you are
@@ -36,5 +35,3 @@ timesheet. The plan and all decisions are in `PLAN.md`.
 - Application (dialog): `target/e-invoice-generator` after `mvn verify`, or
   `mvn -q compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.App`
   (optional `-Dexec.args="--config <directory>"`, default `~/rechnungen/config`)
-- Proof of concept: `mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.PocMain`
-  (optional `-Dexec.args="<output dir> <timesheet.pdf>"`), output in `target/poc/`.
