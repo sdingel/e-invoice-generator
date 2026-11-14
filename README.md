@@ -134,8 +134,8 @@ The dialog asks for customer, invoice date, billing period (month), hours and th
 file names), shows a summary and creates the e-invoice after confirmation, reporting each step ① to ⑪.
 Exit code: 0 invoice created, 1 error, 2 aborted.
 
-Each invoice names the tool with its version in the PDF metadata (Producer, Creator, and the XMP
-CreatorTool with the project URL).
+Each invoice names the tool with its version in the PDF metadata: Producer, and Creator (shown in the
+document properties of PDF viewers) and XMP CreatorTool with the project URL.
 
 ## Build
 

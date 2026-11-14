@@ -575,9 +575,11 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
        `exec:java`.
      - `--version` zeigt „E-Invoice Generator 0.1.0-SNAPSHOT“ und den Link, `--help` die Version in der ersten
        Zeile.
-     - PDF-Metadaten jeder Rechnung (⑧): Producer und Creator (Dokumentinformationen und XMP)
-       „E-Invoice Generator 0.1.0-SNAPSHOT“, XMP-`CreatorTool` zusätzlich mit
-       „(https://github.com/sdingel/e-invoice-generator)“. Vorher stand dort „mustangproject“.
+     - PDF-Metadaten jeder Rechnung (⑧): Producer „E-Invoice Generator 0.1.0-SNAPSHOT“. Creator in den
+       Dokumentinformationen (zeigen PDF-Viewer in den Dokumenteigenschaften an, z. B. Acrobat als
+       „Anwendung“) und XMP-`CreatorTool` zusätzlich mit „(https://github.com/sdingel/e-invoice-generator)“
+       (Entscheidung vom 14.11.2026: Link nur in den Metadaten, nicht sichtbar auf der Rechnung). Vorher
+       stand im `CreatorTool` „mustangproject“.
      - Mustang 2.26.0 hängt an den Producer in den Dokumentinformationen „(via mustangproject.org
        ${project.version})“ mit nicht ersetztem Platzhalter an. `ZugferdXmlEmbedder` überschreibt dafür
        `writeDocumentInformation` und setzt die Mustang-Version aus der `pom.xml` ein (Entscheidung vom
