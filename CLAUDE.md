@@ -20,7 +20,7 @@ timesheet. The plan and all decisions are in `PLAN.md`.
 
 - Package names follow `de.steffendingel.<projectname>`, here `de.steffendingel.einvoicegenerator`
   (the owner holds the domain `steffendingel.de`).
-- Java 21, Maven.
+- Java 17 (the minimum version; build and CI use JDK 17), Maven.
 - The repository is public: never commit real personal data (addresses, IBAN, tax IDs, customer
   data, real timesheets). Use obvious example data instead.
 

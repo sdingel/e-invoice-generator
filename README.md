@@ -110,7 +110,7 @@ Notes:
 
 ## Installation
 
-Requirements: Java 21 or newer.
+Requirements: Java 17 or newer.
 
 1. Download the latest build: on the [Actions page](https://github.com/sdingel/e-invoice-generator/actions/workflows/build.yml),
    open a successful run of `main` and download the artifact **e-invoice-generator** (a ZIP file), or build it
@@ -135,7 +135,7 @@ Exit code: 0 invoice created, 1 error, 2 aborted.
 
 ## Build
 
-Requirements: Java 21, Maven 3.9.
+Requirements: Java 17 or newer, Maven 3.9.
 
 ```sh
 mvn verify    # build, run the tests and create target/e-invoice-generator.jar with the start scripts
