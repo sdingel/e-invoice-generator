@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
@@ -26,6 +29,7 @@ class ExecutableJarIT {
     private static final Path TARGET = Path.of("target");
     private static final Path JAR = TARGET.resolve("e-invoice-generator.jar");
     private static final Path SCRIPT = TARGET.resolve("e-invoice-generator");
+    private static final Path WINDOWS_SCRIPT = TARGET.resolve("e-invoice-generator.cmd");
 
     @TempDir
     Path home;
@@ -38,6 +42,7 @@ class ExecutableJarIT {
     private Result run(List<String> command, String input) throws IOException, InterruptedException {
         ProcessBuilder builder = new ProcessBuilder(command).directory(workDir.toFile()).redirectErrorStream(true);
         builder.environment().remove("JAVA_TOOL_OPTIONS"); // would add a line to the output
+        builder.environment().put("JAVA_HOME", System.getProperty("java.home")); // start scripts use this Java
         Process process = builder.start();
         process.getOutputStream().write(input.getBytes(StandardCharsets.UTF_8));
         process.getOutputStream().close();
@@ -71,6 +76,7 @@ class ExecutableJarIT {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = "bash on Windows (Git Bash, WSL) cannot take Windows paths")
     void startScriptRunsTheJar() throws Exception {
         assertThat(SCRIPT).exists();
 
@@ -81,9 +87,17 @@ class ExecutableJarIT {
     }
 
     @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void windowsStartScriptRunsTheJar() throws Exception {
+        Result result = run(List.of("cmd", "/c", WINDOWS_SCRIPT.toAbsolutePath().toString(), "--help"), "");
+
+        assertThat(result.exitCode()).as(result.output()).isZero();
+        assertThat(result.output()).contains("Aufruf: e-invoice-generator");
+    }
+
+    @Test
     void windowsStartScriptIsPackagedWithWindowsLineEndings() throws IOException {
-        // Cannot be run here; checked by hand on Windows
-        String script = Files.readString(TARGET.resolve("e-invoice-generator.cmd"));
+        String script = Files.readString(WINDOWS_SCRIPT);
 
         assertThat(script).contains("-jar \"%JAR%\" %*").contains("\r\n").doesNotContain("\r\r\n");
     }

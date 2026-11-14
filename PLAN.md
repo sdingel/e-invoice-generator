@@ -504,7 +504,7 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      in `settings.yaml` eingebunden wird. **Regel:** Alles, was auch im XML steht (Name, Anschrift,
      E-Mail, USt-IdNr./Steuernummer, IBAN, BIC, Kunden- und Rechnungsdaten), kommt aus Variablen; fest
      im Template stehen nur reine Anzeige-Angaben (Tätigkeitsbezeichnung, Telefon, Mobil, Website,
-     Bankname), die im XML nicht vorkommen. Der PoC nutzt eine eigene Template-Kopie (`resources/poc/`).
+     Bankname), die im XML nicht vorkommen. Der PoC nutzte eine eigene Template-Kopie (`resources/poc/`, inzwischen entfernt).
    - ✔ ③ `HtmlToPdfConverter` / `OpenHtmlToPdfConverter` und ④ `PdfTextVerifier` / `PdfBoxTextVerifier`
      mit Tests (13.11.2026). PDF/A-3b mit Carlito und sRGB-Profil aus dem JDK; fehlende Schriftdateien
      → Fehler schon beim Erzeugen des Konverters.
@@ -563,8 +563,9 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
      - Startskripte `e-invoice-generator` (Linux/WSL/macOS) und `e-invoice-generator.cmd` (Windows) in
        `src/dist/`, beim Bauen neben das JAR nach `target/` kopiert. Das Windows-Skript setzt die Codepage auf
        UTF-8 (`chcp 65001`) und wird vom Nutzer auf Windows getestet.
-     - `ExecutableJarIT` (Failsafe, nach dem Bauen) startet das fertige JAR: `--help`, das Linux-Skript und
-       ein kompletter Durchlauf bis zur gültigen E-Rechnung.
+     - `ExecutableJarIT` (Failsafe, nach dem Bauen) startet das fertige JAR: `--help`, das Startskript des
+       Systems (unter Windows `e-invoice-generator.cmd`, sonst das bash-Skript; seit 14.11.2026, nachdem der
+       bash-Test unter Windows an den Pfaden scheiterte) und ein kompletter Durchlauf bis zur gültigen E-Rechnung.
      - Der CI-Build stellt JAR und Startskripte als Download bereit (Artefakt „e-invoice-generator“).
    - ✔ **Versionsnummer** (14.11.2026; Version bleibt vorerst `0.1.0-SNAPSHOT`, bis der Nutzer eine feste
      Version freigibt):
@@ -586,11 +587,10 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
        14.11.2026: Mustang-Hinweis bleibt). Producer in den Dokumentinformationen damit
        „E-Invoice Generator 0.1.0-SNAPSHOT (via mustangproject.org 2.26.0)“, im XMP ohne Zusatz; die
        Abweichung ist für PDF/A-3 zulässig (veraPDF und Mustang-Validator ohne Befund).
-   - **Nächster Schritt: PoC aus dem Code entfernen** (siehe unten).
-   - **Danach geplant** (aufgenommen am 14.11.2026, Details noch zu klären):
-     - **PoC aus dem Code entfernen:** Package `de.steffendingel.einvoicegenerator.poc`, Template-Kopie in
-       `src/main/resources/poc/`, die PoC-Abschnitte in README und `CLAUDE.md`. Die Erkenntnisse in
-       Abschnitt 11 bleiben als Dokumentation erhalten.
+   - ✔ **PoC aus dem Code entfernt** (14.11.2026): Package `de.steffendingel.einvoicegenerator.poc`,
+     Template-Kopie in `src/main/resources/poc/`, die PoC-Abschnitte in README und `CLAUDE.md`. Die
+     Erkenntnisse in Abschnitt 11 bleiben als Dokumentation erhalten.
+   - **Nächster Schritt** (aufgenommen am 14.11.2026, Details noch zu klären):
      - **Nutzung durch englischsprachige Nutzer prüfen:** Was heute deutsch ist bzw. gemischt erscheint, z. B.
        der Konsolendialog, die Fehlermeldungen (teils deutsch aus dem Dialog, teils englisch aus den
        einzelnen Schritten), das eingebaute Rechnungs-Template, das Standard-Dateinamen-Template
@@ -624,9 +624,9 @@ String generate(Invoice invoice, List<Timesheet> timesheets);  // nach Bestätig
 
 ## 11. Ergebnisse des PoC (27.10.2026)
 
-Ausführen: `mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.PocMain`
-(optional `-Dexec.args="<ausgabeordner> <nachweis.pdf>"` für einen eigenen Stundennachweis)
-(Ausgabe in `target/poc/`: HTML-Vorschau, Zwischen-PDFs, fertige E-Rechnung, Validierungsbericht).
+Der PoC-Code (`de.steffendingel.einvoicegenerator.poc.PocMain`, Template-Kopie `resources/poc/`) wurde am
+14.11.2026 entfernt; er steht noch im Git-Verlauf (letzter Stand: Commit `2664c8c`). Er schrieb HTML-Vorschau,
+Zwischen-PDFs, fertige E-Rechnung und Validierungsbericht nach `target/poc/`.
 
 | Schritt | Ergebnis |
 |---|---|

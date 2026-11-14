@@ -11,13 +11,10 @@ Command-line tool for freelancers that creates monthly invoices as hybrid **ZUGF
 ## How an invoice is generated
 
 Each numbered processing step has one interface with a defined input and output (signatures in
-[`PLAN.md`](PLAN.md), section 8). The diagram shows the data flow; the proof of concept
-(`de.steffendingel.einvoicegenerator.poc.PocMain`) implemented steps ② to ⑨ except ④; the application
-now implements all steps (`InvoiceService`).
+[`PLAN.md`](PLAN.md), section 8). The diagram shows the data flow; `InvoiceService` runs the steps.
 
 Legend: blue parallelograms are inputs, grey parallelograms are intermediate results and output,
-rectangles are processing steps, hexagons are checks that abort on failure. Dashed shapes are planned
-but not part of the proof of concept yet.
+rectangles are processing steps, hexagons are checks that abort on failure.
 
 ```mermaid
 flowchart TD
@@ -45,7 +42,7 @@ flowchart TD
     hybrid[/"Hybrid e-invoice<br/>PDF/A-3b + factur-x.xml"/]
     s9{{"⑨ Validate e-invoice"}}
     s10["⑩ Store invoice"]
-    file[/"302_customer_2026-10.pdf"/]
+    file[/"2026-11-02 Max Mustermann Beispielkunde<br/>Rechnung 302 für 2026-10.pdf"/]
     s11["⑪ Increment invoice number"]
 
     request --> s1
@@ -75,11 +72,9 @@ flowchart TD
     classDef input fill:#e8f1fb,stroke:#4a7ab5,color:#000
     classDef artifact fill:#f4f4f4,stroke:#888,color:#000
     classDef check fill:#fff4e0,stroke:#c98a1b,color:#000
-    classDef planned stroke-dasharray: 5 5
     class request,number,template,fonts,timesheet input
     class invoice,xhtml,invoicePdf,mergedPdf,xml,hybrid,file artifact
     class s4,s6,s9 check
-    class s1,s4,s10,s11 planned
 ```
 
 | Step | Interface | Library | Input → output |
@@ -150,14 +145,6 @@ mvn -q compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.App
 ```
 
 Tests named `*IT` run against the finished JAR after packaging (`mvn verify`, not `mvn test`).
-
-Proof of concept (throwaway), output in `target/poc/`:
-
-```sh
-mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.PocMain
-mvn compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.poc.PocMain \
-    -Dexec.args="target/poc /path/to/timesheet.pdf"
-```
 
 ## Configuration
 
