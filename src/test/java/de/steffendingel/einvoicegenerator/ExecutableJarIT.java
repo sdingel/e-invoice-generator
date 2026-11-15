@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
@@ -20,14 +22,16 @@ import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Starts the finished JAR in a separate process, as a user would. Packaging problems (missing service
- * registrations, broken signatures, missing resources) only show up here, not in the unit tests.
+ * Starts the finished JAR in a separate process, as a user would. Packaging problems (missing libraries
+ * next to the JAR, missing resources, a wrong JAR name in the start scripts) only show up here, not in the
+ * unit tests.
  * Runs after the package phase (maven-failsafe-plugin).
  */
 class ExecutableJarIT {
 
     private static final Path TARGET = Path.of("target");
-    private static final Path JAR = TARGET.resolve("e-invoice-generator.jar");
+    private static final Path LIB = TARGET.resolve("lib");
+    private static final Path JAR = LIB.resolve("e-invoice-generator-" + AppInfo.VERSION + ".jar");
     private static final Path SCRIPT = TARGET.resolve("e-invoice-generator");
     private static final Path WINDOWS_SCRIPT = TARGET.resolve("e-invoice-generator.cmd");
 
@@ -100,6 +104,21 @@ class ExecutableJarIT {
         String script = Files.readString(WINDOWS_SCRIPT);
 
         assertThat(script).contains("-jar \"%JAR%\" %*").contains("\r\n").doesNotContain("\r\r\n");
+        assertThat(script).contains("lib\\" + JAR.getFileName()).doesNotContain("@project.");
+    }
+
+    @Test
+    void everyClassPathEntryOfTheManifestExistsInLib() throws IOException {
+        String classPath;
+        try (JarFile jar = new JarFile(JAR.toFile())) {
+            classPath = jar.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+        }
+
+        assertThat(classPath).as("Class-Path of the manifest").isNotBlank();
+        // Entries are relative to the directory of the JAR, and the libraries are in the same directory
+        assertThat(classPath.split(" "))
+                .allSatisfy(entry -> assertThat(entry).endsWith(".jar").doesNotContain("/"))
+                .allSatisfy(entry -> assertThat(LIB.resolve(entry)).isRegularFile());
     }
 
     @Test

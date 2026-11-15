@@ -198,10 +198,21 @@ for all. The `maven-enforcer-plugin` checks on every build:
   `app.properties` (own directory `src/main/resources-filtered/`, because filtering would damage the
   fonts and the `${…}` expressions of the templates); `AppInfo` reads them. The manifest is not used,
   because it exists only in the finished JAR, not in tests or `exec:java`.
-- The JAR contains all libraries (`maven-shade-plugin`): signature files of the libraries removed,
-  `META-INF/services` merged (FOP, ph-commons and Jackson ship files with the same name; without merging
-  they would be lost silently), `Multi-Release: true`.
+- The JAR contains only the tool's own classes and resources (`maven-jar-plugin`). It is named like an
+  artifact from a Maven repository (`e-invoice-generator-<version>.jar`) and lies in `lib/` together
+  with the libraries, which are copied there unchanged (`maven-dependency-plugin`, runtime scope). The
+  manifest lists them as `Class-Path` without a directory; `java -jar` resolves these entries relative
+  to the JAR, so the start scripts need no class path.
+- The start scripts lie next to `lib/` and are filtered by Maven, which writes the version into the
+  name of the JAR. Only `@…@` is replaced, because the bash script uses `${…}` itself. A wildcard was
+  not used, so that a JAR of another version left in `lib/` cannot be started by mistake.
+- Unchanged library JARs keep their license and notice files, their signatures (e.g. Saxon-HE) and
+  their service registrations, and a single library can be replaced by swapping its JAR (e.g. openhtmltopdf, LGPL). A fat JAR (`maven-shade-plugin`) was used before; it had
+  to merge about 86 libraries, strip their signatures and merge `META-INF/services`, and it silently
+  dropped overlapping files such as all but one `NOTICE`.
+- The library JARs keep their Maven file names (`artifactId-version.jar`). There are no collisions at
+  present; if one appears, both plugins have to prepend the group ID.
 - Library logging is switched off (`slf4j-nop`, `XRLog`, java.util.logging at `SEVERE`); the tool reports
   problems itself.
 - `*IT` tests (Failsafe) run against the finished JAR: help, version, the start script of the current
-  system, and a complete run to a valid e-invoice.
+  system, a complete run to a valid e-invoice, and that every `Class-Path` entry exists in `lib/`. The start script test also covers the filtered JAR name.
