@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
@@ -20,8 +22,8 @@ import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Starts the finished JAR in a separate process, as a user would. Packaging problems (missing service
- * registrations, broken signatures, missing resources) only show up here, not in the unit tests.
+ * Starts the finished JAR in a separate process, as a user would. Packaging problems (missing libraries
+ * in {@code lib/}, missing resources) only show up here, not in the unit tests.
  * Runs after the package phase (maven-failsafe-plugin).
  */
 class ExecutableJarIT {
@@ -100,6 +102,20 @@ class ExecutableJarIT {
         String script = Files.readString(WINDOWS_SCRIPT);
 
         assertThat(script).contains("-jar \"%JAR%\" %*").contains("\r\n").doesNotContain("\r\r\n");
+    }
+
+    @Test
+    void everyClassPathEntryOfTheManifestExistsInLib() throws IOException {
+        String classPath;
+        try (JarFile jar = new JarFile(JAR.toFile())) {
+            classPath = jar.getManifest().getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+        }
+
+        assertThat(classPath).as("Class-Path of the manifest").isNotBlank();
+        // Entries are relative to the directory of the JAR
+        assertThat(classPath.split(" "))
+                .allSatisfy(entry -> assertThat(entry).startsWith("lib/").endsWith(".jar"))
+                .allSatisfy(entry -> assertThat(TARGET.resolve(entry)).isRegularFile());
     }
 
     @Test
