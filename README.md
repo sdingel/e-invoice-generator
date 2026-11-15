@@ -133,10 +133,10 @@ Requirements: Java 17 or newer.
 1. Download the latest build: on the [Actions page](https://github.com/sdingel/e-invoice-generator/actions/workflows/build.yml),
    open a successful run of `main` and download the artifact **e-invoice-generator** (a ZIP file), or build it
    yourself (see below).
-2. Unpack it into a directory of your choice. It contains `e-invoice-generator.jar`, the directory `lib/`
-   with the libraries and the start scripts `e-invoice-generator` (Linux, WSL, macOS) and
-   `e-invoice-generator.cmd` (Windows). The JAR, `lib/` and the scripts must stay in the same directory: the
-   JAR finds the libraries only in the `lib/` directory next to it.
+2. Unpack it into a directory of your choice. It contains the start scripts `e-invoice-generator` (Linux,
+   WSL, macOS) and `e-invoice-generator.cmd` (Windows) and the directory `lib/` with the JAR of the tool
+   (`e-invoice-generator-<version>.jar`) and the libraries. The scripts and `lib/` must stay in the same
+   directory, and the JARs must stay together in `lib/`: the tool finds its libraries only next to its own JAR.
 3. On Linux/WSL/macOS make the script executable: `chmod +x e-invoice-generator` (ZIP files do not keep this
    permission). Optionally put the directory on your `PATH`.
 4. Create the configuration in `~/rechnungen/config` (see [Configuration](#configuration)).
@@ -144,7 +144,7 @@ Requirements: Java 17 or newer.
 ```sh
 e-invoice-generator                       # Linux, WSL, macOS
 e-invoice-generator.cmd                   # Windows
-java -jar e-invoice-generator.jar         # without the scripts
+java -jar lib/e-invoice-generator-<version>.jar   # without the scripts
 e-invoice-generator --config ~/my-config  # other configuration directory
 e-invoice-generator --version             # show the version
 ```
@@ -196,7 +196,7 @@ document properties of PDF viewers) and XMP CreatorTool with the project URL.
 Requirements: Java 17 or newer, Maven 3.9.
 
 ```sh
-mvn verify    # build, run the tests and create target/e-invoice-generator.jar, target/lib/ and the start scripts
+mvn verify    # build, run the tests and create target/lib/ (JAR and libraries) and the start scripts in target/
 
 # run without building the JAR
 mvn -q compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.App

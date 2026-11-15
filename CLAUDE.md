@@ -62,8 +62,9 @@ timesheet. Planning happens in GitHub issues (see Workflow); how the tool is bui
 
 ## Build and run
 
-- Build and test: `mvn verify` (runs the tests and the enforcer rules, builds `target/e-invoice-generator.jar`
-  with the start scripts from `src/dist/`, then runs the `*IT` tests against the JAR); unit tests only: `mvn test`
+- Build and test: `mvn verify` (runs the tests and the enforcer rules, builds the JAR and the libraries in
+  `target/lib/` and the start scripts from `src/dist/` in `target/`, then runs the `*IT` tests against the
+  JAR); unit tests only: `mvn test`
 - Application (dialog): `target/e-invoice-generator` after `mvn verify`, or
   `mvn -q compile exec:java -Dexec.mainClass=de.steffendingel.einvoicegenerator.App`
   (optional `-Dexec.args="--config <directory>"`, default `~/rechnungen/config`)
