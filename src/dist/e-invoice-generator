@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Starts the E-Invoice Generator. The JAR and the lib directory with the libraries must be in the same
-# directory as this script.
+# Starts the E-Invoice Generator. The lib directory with the JAR and the libraries must be in the same
+# directory as this script. The build replaces the version in the name of the JAR.
 # Uses $JAVA_HOME/bin/java if JAVA_HOME is set, otherwise "java" from the PATH (Java 17 or newer).
 #
 # Usage: e-invoice-generator [--config <directory>] [--help] [--version]
@@ -8,10 +8,10 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-jar="$script_dir/e-invoice-generator.jar"
+jar="$script_dir/lib/e-invoice-generator-@project.version@.jar"
 
 if [[ ! -f "$jar" ]]; then
-    echo "e-invoice-generator.jar not found next to this script: $jar" >&2
+    echo "JAR not found in the lib directory next to this script: $jar" >&2
     exit 1
 fi
 

@@ -32,14 +32,13 @@ jobs:
       - name: Build and test
         run: mvn --batch-mode --no-transfer-progress verify
 
-      # Download on the page of the workflow run: the JAR, the libraries in lib/ and the start scripts for
-      # Linux and Windows
+      # Download on the page of the workflow run: lib/ with the JAR and the libraries, and the start scripts
+      # for Linux and Windows
       - name: Provide the application as download
         uses: actions/upload-artifact@v7
         with:
           name: e-invoice-generator
           path: |
-            target/e-invoice-generator.jar
             target/lib/
             target/e-invoice-generator
             target/e-invoice-generator.cmd

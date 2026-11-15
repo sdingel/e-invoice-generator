@@ -1,15 +1,15 @@
 @echo off
-rem Starts the E-Invoice Generator. The JAR and the lib directory with the libraries must be in the same
-rem directory as this script.
+rem Starts the E-Invoice Generator. The lib directory with the JAR and the libraries must be in the same
+rem directory as this script. The build replaces the version in the name of the JAR.
 rem Uses %JAVA_HOME%\bin\java.exe if JAVA_HOME is set, otherwise "java" from the PATH (Java 17 or newer).
 rem
 rem Usage: e-invoice-generator [--config <directory>] [--help] [--version]
 
 setlocal
 
-set "JAR=%~dp0e-invoice-generator.jar"
+set "JAR=%~dp0lib\e-invoice-generator-@project.version@.jar"
 if not exist "%JAR%" (
-    echo e-invoice-generator.jar not found next to this script: %JAR% 1>&2
+    echo JAR not found in the lib directory next to this script: %JAR% 1>&2
     exit /b 1
 )
 

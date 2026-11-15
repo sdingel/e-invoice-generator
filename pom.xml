@@ -141,8 +141,6 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
-        <!-- target/e-invoice-generator.jar -->
-        <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -194,23 +192,25 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Executable JAR with our own classes only; its manifest lists the libraries in lib/ as Class-Path -->
+            <!-- Executable JAR with our own classes only, named like an artifact from a Maven repository and
+                 placed next to the libraries: target/lib/e-invoice-generator-<version>.jar. Its manifest lists
+                 the libraries as Class-Path (relative to the JAR, so without a directory) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${maven-jar-plugin.version}</version>
                 <configuration>
+                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
                     <archive>
                         <manifest>
                             <mainClass>de.steffendingel.einvoicegenerator.App</mainClass>
                             <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
                         </manifest>
                     </archive>
                 </configuration>
             </plugin>
-            <!-- The unchanged library JARs next to our JAR: target/lib/. They keep their license and notice
-                 files, signatures and service registrations -->
+            <!-- The unchanged library JARs in the same directory as our JAR: target/lib/. They keep their
+                 license and notice files, signatures and service registrations -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -229,7 +229,9 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Start scripts next to the JAR: target/ then contains everything to run the tool (JAR, lib/, scripts) -->
+            <!-- Start scripts next to lib/: target/ then contains everything to run the tool. The scripts are
+                 filtered, so that they know the name of the JAR with its version. Only @...@ is replaced,
+                 because the bash script uses ${...} itself -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -243,9 +245,14 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}</outputDirectory>
+                            <useDefaultDelimiters>false</useDefaultDelimiters>
+                            <delimiters>
+                                <delimiter>@</delimiter>
+                            </delimiters>
                             <resources>
                                 <resource>
                                     <directory>src/dist</directory>
+                                    <filtering>true</filtering>
                                 </resource>
                             </resources>
                         </configuration>
