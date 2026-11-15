@@ -55,6 +55,10 @@ timesheet. Planning happens in GitHub issues (see Workflow); how the tool is bui
   the issue stays open.
 - GitHub deletes a branch when its pull request is merged. Afterwards, update `main` with
   `git pull --prune` and delete the local copy of the branch.
+- Suggest to the user to start a new session at suitable points: when a new topic or issue starts and
+  nothing is in progress, or when the session has become long (e.g. after the conversation was
+  summarized automatically). Before that, make sure that everything worth keeping from the conversation
+  is in issues, issue comments or files, and that all work is pushed.
 
 ## Build and run
 
